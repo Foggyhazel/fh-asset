@@ -1,0 +1,298 @@
+import logging
+import typing
+
+from assetbrowser import houhelper
+try:
+    from typing import TypedDict
+except ImportError:
+    from .typing_extensions import TypedDict
+from enum import Enum
+from os import path as opath
+from PySide2.QtWidgets import (
+    QTreeView,
+    QWidget,
+    QSplitter,
+    QLabel,
+    QVBoxLayout,
+    QListView,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QPushButton,
+    QMessageBox,
+    QAbstractItemView
+)
+from PySide2.QtCore import QModelIndex, Qt, QItemSelection, QSize
+from PySide2.QtGui import QPainter, QDragEnterEvent, QDropEvent
+from PySide2.QtWidgets import QWidget
+from PySide2.QtGui import QCloseEvent
+
+from .createAsset import Payload, PayloadType, processCreateAssetPayload
+from . import asset
+from . import config
+from .ui_editAsset import Ui_EditAsset
+from .model import AssetFileModel, FilterAssetDir
+import time
+
+try:
+    import hou
+except ImportError:
+    logging.warning('running without hou module')
+    from . import shimhou as hou
+
+
+def alert(parent, title: str, text: str, buttons=QMessageBox.Ok):
+    msg = QMessageBox(parent)
+    msg.setWindowTitle(title)
+    msg.setText(text)
+    msg.setStandardButtons(buttons)
+    msg.exec_()
+
+
+class AssetItem(QStyledItemDelegate):
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        return super().paint(painter, option, index)
+
+
+class AssetBrowser(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+
+        parent_of_root = opath.dirname(config.root_path)
+
+        # model
+        model = AssetFileModel()
+        model.setRootPath(parent_of_root)
+        filtered = FilterAssetDir(model, config.root_path)
+        self.model = model
+        self.filteredModel = filtered
+
+        # directory tree
+        tree = QTreeView()
+        tree.setHeaderHidden(True)
+        tree.setModel(filtered)
+        tree.setRootIndex(filtered.mapFromSource(model.index(parent_of_root)))
+        root_index = filtered.mapFromSource(model.index(config.root_path))
+        tree.setCurrentIndex(root_index)
+        tree.setExpanded(root_index, True)
+        tree.setIndentation(12)
+        # show only first column
+        for i in range(1, model.columnCount()):
+            tree.hideColumn(i)
+        # connect selection change
+        tree.selectionModel().selectionChanged.connect(self.handleTreeSelectionChanged)
+        self.treeWidget = tree
+
+        # file list
+        list = QListView()
+        list.setModel(model)
+        list.setViewMode(QListView.IconMode)
+        list.setMovement(QListView.Static)
+        list.setRootIndex(model.index(config.root_path))
+        list.setUniformItemSizes(True)
+        list.setGridSize(QSize(60, 60))
+        list.setItemDelegate(AssetItem())
+        list.setDragEnabled(True)
+        list.setDragDropMode(QAbstractItemView.InternalMove)
+
+        # wiring signals
+        list.selectionModel().selectionChanged.connect(self.handleListSelectionChanged)
+        list.doubleClicked.connect(self.handleListDoubleClicked)
+
+        self.listWidget = list
+
+        # info
+        info = QLabel('Select an asset')
+        info.setWordWrap(True)
+        self.infoWidget = info
+
+        # laying out
+        layout = QVBoxLayout()
+        splitter = QSplitter()
+        splitter.addWidget(tree)
+        splitter.addWidget(list)
+        splitter.addWidget(info)
+        splitter.setSizes(config.init_panel_sizes)
+        layout.addWidget(splitter)
+
+        # debug
+        btn = QPushButton('show form')
+        btn.clicked.connect(self.handleShowPress)
+        layout.addWidget(btn)
+
+        self.setLayout(layout)
+
+        # drag and drop
+        self.setAcceptDrops(True)
+
+    def updateFileView(self, index: QModelIndex):
+        self.listWidget.setRootIndex(index.siblingAtColumn(0))
+
+    def updateInfoView(self, asset_path: str):
+        info = asset.getAsset(asset_path)
+        # houhelper.loadAsset(info, None)
+        self.infoWidget.setText('latest: %s \ninfo:\n %s' % (
+            info.latestVersion(),  str(info)) if info else 'Select an asset..')
+
+    def handleTreeSelectionChanged(self, selected: QItemSelection, deselected):
+        self.updateFileView(self.getCurrentFileModelIndex())
+
+    def handleListSelectionChanged(self, selected: QItemSelection, deselected):
+        index = self.listWidget.currentIndex()
+        path = self.model.filePath(index)
+        self.updateInfoView(path)
+
+    def handleListDoubleClicked(self, index: QModelIndex):
+        model = self.model
+        info = model.fileInfo(index)
+        path = info.filePath()
+        if asset.isAssetFolder(path):
+            return
+        elif info.isDir():
+            self.setCurrentDirectory(path)
+
+    def getCurrentFileModelIndex(self) -> QModelIndex:
+        index = self.treeWidget.currentIndex()
+        return self.filteredModel.mapToSource(index)
+
+    def getCurrentDirectory(self) -> str:
+        return self.model.filePath(self.getCurrentFileModelIndex().siblingAtColumn(0))
+
+    def setCurrentDirectory(self, path: str):
+        file_index = self.model.index(path)
+        filtered_index = self.filteredModel.mapFromSource(file_index)
+        self.treeWidget.setCurrentIndex(filtered_index)
+        self.listWidget.setRootIndex(file_index)
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        event.acceptProposedAction()
+        return
+        # do not accept drop from list view itself
+        if event.source() is self.listWidget:
+            return
+        else:
+            event.acceptProposedAction()
+
+    @staticmethod
+    def printMimeData(event: QDropEvent):
+        formats = event.mimeData().formats()
+        d = [(f, event.mimeData().data(f)) for f in formats]
+        print('data', d)
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        if self.listWidget.geometry().contains(event.pos()):
+            # drop inside list widget
+            item_data = event.mimeData().data(hou.qt._itemPathMimeType())
+            if not item_data.isEmpty():
+                items = str(item_data, 'utf-8').split('\t')
+                payload = {
+                    'type': PayloadType.NetworkItems,
+                    'data': items
+                }
+                self.beginCreateAsset(payload, self.getCurrentDirectory())
+
+    def handleShowPress(self):
+        self.beginCreateAsset([''], self.getCurrentDirectory())
+
+    def beginCreateAsset(self, payload: Payload, path_to_create_in: str):
+        def onSavePress(data: EditAssetFormData):
+            asset_folder = asset.Asset.toAssetName(data['title'])
+            if not asset_folder:
+                raise Exception("Invalid Asset Name")
+
+            p = opath.join(path_to_create_in, asset_folder)
+
+            ref = asset.Ref.fromAbsPath(p)
+
+            assetObj = asset.Asset(ref)
+            assetObj.setData(type=data['type'],
+                             title=data['title'], tags=data['tags'])
+            version = asset.cleanVersionString(data['version'])
+            assetObj.setOrAddVersion(version, version)
+
+            # create asset def
+            assetDefObj = asset.AssetDef(ref.toDef(version))
+            content = processCreateAssetPayload(payload, assetDefObj)
+            assetDefObj.setData(
+                description=data['description'], createdOn=time.time(), content=content)
+
+            # save assetObj and asset def
+            asset.setAsset(assetObj)
+            asset.setDef(assetDefObj)
+
+            alert(self, 'Asset Saved', 'Asset save', QMessageBox.Ok)
+            self.editAsset.close()
+        w = EditAssetWindow(mode=EditAssetWindow.Mode.New,
+                            onSavePress=onSavePress)
+        # maintain reference so it's not destroyed immediately
+        self.editAsset = w
+        if 'qt' in dir(hou):
+            w.setParent(hou.qt.mainWindow(), Qt.Window)
+
+        w.show()
+
+
+class EditAssetFormData(TypedDict):
+    type: str
+    title: str
+    version: str
+    tags: typing.List[str]
+    description: str
+
+
+class EditAssetWindow(QWidget, Ui_EditAsset):
+    class Mode(Enum):
+        New = 0
+        Edit = 1
+
+    def __init__(self, parent: typing.Optional[QWidget] = None, mode=Mode.New, asset_type=None, onSavePress: typing.Callable[[EditAssetFormData], None] = None) -> None:
+        super().__init__(parent)
+        self.onSavePress = onSavePress
+        self.setupUi(self)
+        self.setTitle()
+        self.asset_type.setText(asset_type if asset_type is not None else '')
+        # self.asset_version.setEnabled(False)
+
+        # setup signals
+        self.form_buttons.accepted.connect(self.handleSave)
+        self.form_buttons.rejected.connect(self.handleClose)
+
+    def setTitle(self, mode=Mode.New):
+        if mode == self.Mode.New:
+            self.setWindowTitle('New Asset')
+        elif mode == self.Mode.Edit:
+            self.setWindowTitle('Edit Asset')
+        else:
+            print('Unknown mode: ', mode)
+
+    def setIntialData(self, asset: asset.Asset, version: str = None, asset_def: asset.AssetDef = None):
+        self.asset_title.setText(asset.title())
+        self.asset_type.setText(asset.assetType())
+        if asset_def:
+            if version:
+                self.asset_version.setText(version)
+                # disabe version edit
+                self.asset_version.setEnabled(False)
+            self.asset_description.setText(asset_def.description)
+
+    def data(self) -> EditAssetFormData:
+        return {
+            'type': self.asset_type.text(),
+            'title': self.asset_title.text(),
+            'tags': self.asset_tags.tags,
+            'version': self.asset_version.text(),
+            'description': self.asset_description.toPlainText()
+        }
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        super().closeEvent(event)
+        self.setParent(None)
+
+    def handleSave(self):
+        if self.onSavePress:
+            try:
+                self.onSavePress(self.data())
+            except Exception as e:
+                alert(self, 'An Error Occured', str(e))
+
+    def handleClose(self):
+        self.close()

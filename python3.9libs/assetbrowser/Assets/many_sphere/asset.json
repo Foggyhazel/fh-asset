@@ -1,0 +1,10 @@
+{
+  "_schemaVersion": 1,
+  "id": null,
+  "title": "many_sphere",
+  "tags": [],
+  "assetType": null,
+  "resolves": {
+    "0.1": "0.1"
+  }
+}
