@@ -7,7 +7,7 @@ from .asset import AssetDef
 
 class PayloadType(Enum):
     NetworkItems = 0
-    Any = 1
+    Debug = 1
 
 
 class Payload(typing.TypedDict):
@@ -27,9 +27,9 @@ def determineAssetTypeFromPayload(payload: Payload) -> str:
             raise Exception(
                 'Cannot determine network type of node "%s"' % first_node)
 
-    elif t == PayloadType.Any:
+    elif t == PayloadType.Debug:
         # for debug
-        return 'any'
+        return 'debug'
     else:
         raise Exception('Unsupported asset type %s' % t)
 
@@ -54,5 +54,7 @@ def processCreateAssetPayload(payload: Payload, asset_def: AssetDef) -> str:
         path = opath.join(defdir, 'content.netitems')
         houhelper.dumpNodeItemsToFile(payload['data'], path)
         return opath.relpath(path, defdir)
+    elif t == PayloadType.Debug:
+        print('asset created')
     else:
         raise Exception('Unknown payload type %s' % t)

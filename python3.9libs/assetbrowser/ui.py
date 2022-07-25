@@ -217,7 +217,7 @@ class AssetBrowser(QWidget):
 
     def handleShowPress(self):
         payload: Payload = {
-            'type': PayloadType.Any,
+            'type': PayloadType.Debug,
             'data': ['']
         }
         self.beginCreateAsset(payload, self.getCurrentDirectory())
@@ -322,10 +322,15 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         return {
             'type': self.asset_type.text(),
             'title': self.asset_title.text(),
-            'tags': self.asset_tags.tags,
+            'tags': self.getTags(),
             'version': self.asset_version.text(),
             'description': self.asset_description.toPlainText()
         }
+
+    def getTags(self) -> typing.List[str]:
+        tag_text = self.asset_tags.text()
+        tags = asset.splitTags(tag_text)
+        return tags
 
     def closeEvent(self, event: QCloseEvent) -> None:
         super().closeEvent(event)

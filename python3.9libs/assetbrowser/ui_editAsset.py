@@ -12,8 +12,6 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
-from .tagbar import TagBar
-
 
 class Ui_EditAsset(object):
     def setupUi(self, EditAsset):
@@ -58,25 +56,25 @@ class Ui_EditAsset(object):
 
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.asset_title)
 
-        self.lb_tags = QLabel(EditAsset)
-        self.lb_tags.setObjectName(u"lb_tags")
-
-        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.lb_tags)
-
-        self.asset_tags = TagBar(EditAsset)
-        self.asset_tags.setObjectName(u"asset_tags")
-
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.asset_tags)
-
         self.lb_version = QLabel(EditAsset)
         self.lb_version.setObjectName(u"lb_version")
 
-        self.formLayout.setWidget(3, QFormLayout.LabelRole, self.lb_version)
+        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.lb_version)
 
         self.asset_version = QLineEdit(EditAsset)
         self.asset_version.setObjectName(u"asset_version")
 
-        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.asset_version)
+        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.asset_version)
+
+        self.lb_tags = QLabel(EditAsset)
+        self.lb_tags.setObjectName(u"lb_tags")
+
+        self.formLayout.setWidget(3, QFormLayout.LabelRole, self.lb_tags)
+
+        self.asset_tags = QLineEdit(EditAsset)
+        self.asset_tags.setObjectName(u"asset_tags")
+
+        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.asset_tags)
 
         self.lb_description = QLabel(EditAsset)
         self.lb_description.setObjectName(u"lb_description")
@@ -163,8 +161,8 @@ class Ui_EditAsset(object):
         self.lb_type.setText(QCoreApplication.translate("EditAsset", u"Type", None))
         self.asset_type.setText(QCoreApplication.translate("EditAsset", u"TextLabel", None))
         self.lb_title.setText(QCoreApplication.translate("EditAsset", u"Asset Name", None))
-        self.lb_tags.setText(QCoreApplication.translate("EditAsset", u"Tags", None))
         self.lb_version.setText(QCoreApplication.translate("EditAsset", u"Version", None))
+        self.lb_tags.setText(QCoreApplication.translate("EditAsset", u"Tags", None))
         self.lb_description.setText(QCoreApplication.translate("EditAsset", u"Description", None))
         self.lb_preview.setText(QCoreApplication.translate("EditAsset", u"Preview", None))
         self.asset_preview.setText(QCoreApplication.translate("EditAsset", u"TextLabel", None))
