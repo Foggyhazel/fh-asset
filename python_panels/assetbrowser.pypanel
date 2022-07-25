@@ -10,6 +10,8 @@
 import importlib
 from  assetbrowser import config, ui, asset, model, createAsset, houhelper
 
+importlib.reload(ui)
+
 def onCreateInterface():
     return ui.AssetBrowser()
 

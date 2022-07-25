@@ -7,4 +7,8 @@
         "C:/Program Files/Side Effects Software/Houdini 19.0.548/houdini/python3.7libs",
         "${workspaceFolder}/python3.9libs"
     ],
+    "qtForPython.lupdate.liveExecution": false,
+    "qtForPython.uic.args": [
+        "-o \"${workspaceFolder}${pathSeparator}python3.9libs${pathSeparator}assetbrowser${pathSeparator}ui_${fileBasenameNoExtension}.py\""
+    ],
 }

@@ -166,8 +166,6 @@ class AssetBrowser(QWidget):
         self.listWidget.setRootIndex(file_index)
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-        event.acceptProposedAction()
-        return
         # do not accept drop from list view itself
         if event.source() is self.listWidget:
             return
@@ -191,8 +189,21 @@ class AssetBrowser(QWidget):
                     'data': items
                 }
                 self.beginCreateAsset(payload, self.getCurrentDirectory())
+        elif self.infoWidget.geometry().contains(event.pos()):
+            # drop inside info widget
+            item_data = event.mimeData().data(hou.qt._itemPathMimeType())
+            if not item_data.isEmpty():
+                items = str(item_data, 'utf-8').split('\t')
+                payload = {
+                    'type': PayloadType.NetworkItems,
+                    'data': items
+                }
+                self.beginEditAsset(payload)
+
 
 # region Debug
+
+
     def handleLoadPress(self):
         asset_obj = self.getCurrentAsset()
         print('loading', asset_obj.title())
@@ -216,7 +227,7 @@ class AssetBrowser(QWidget):
             p = opath.join(path_to_create_in, asset_folder)
 
             ref = asset.Ref.fromAbsPath(p)
-            version = asset.cleanVersionString(data['version'])
+            version = str(asset.Version(data['version']))
             defRef = ref.toDef(version)
 
             if ref.existAsset():
@@ -259,6 +270,41 @@ class AssetBrowser(QWidget):
 
         w.show()
 
+    def beginEditAsset(self, payload: Payload):
+
+        current_asset = self.infoWidget.getCurrentAsset()
+        current_def = self.infoWidget.getCurrentAssetDef()
+
+        # guard no asset to edit
+        if current_asset is None:
+            alert(self, 'Cannot Edit Asset', 'No current asset selected')
+            return
+
+        # get asset type from payload
+        try:
+            asset_type = createAsset.determineAssetTypeFromPayload(
+                payload)
+        except Exception as e:
+            alert(self, 'Cannot edit asset', str(e))
+            return
+
+        # guard mismatch asset type
+        if current_asset.assetType() != asset_type:
+            print(current_asset)
+            alert(self, 'Cannot Edit Asset', 'Asset type mismatch %s != %s' %
+                  (current_asset.assetType(), asset_type))
+            return
+
+        w = EditAssetWindow(mode=EditAssetWindow.Mode.Edit,
+                            asset_type=asset_type)
+        w.setIntialData(current_asset, None, current_def)
+        # maintain reference so it's not destroyed immediately
+        self.editAsset = w
+        if 'qt' in dir(hou):
+            w.setParent(hou.qt.mainWindow(), Qt.Window)
+
+        w.show()
+
 
 class EditAssetFormData(TypedDict):
     type: str
@@ -277,15 +323,24 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         super().__init__(parent)
         self.onSavePress = onSavePress
         self.setupUi(self)
-        self.setTitle()
+        self.setTitle(mode)
         self.asset_type.setText(asset_type if asset_type is not None else '')
-        # self.asset_version.setEnabled(False)
+
+        # adjust ui base on mode
+        if mode == self.Mode.New:
+            self.asset_changes.hide()
+            self.lb_changes.hide()
+            self.asset_title.setReadOnly(False)
+        elif mode == self.Mode.Edit:
+            self.asset_changes.show()
+            self.lb_changes.show()
+            self.asset_title.setReadOnly(True)
 
         # setup signals
         self.form_buttons.accepted.connect(self.handleSave)
         self.form_buttons.rejected.connect(self.handleClose)
 
-    def setTitle(self, mode=Mode.New):
+    def setTitle(self, mode):
         if mode == self.Mode.New:
             self.setWindowTitle('New Asset')
         elif mode == self.Mode.Edit:
@@ -293,22 +348,22 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         else:
             print('Unknown mode: ', mode)
 
-    def setIntialData(self, asset: asset.Asset, version: str = None, asset_def: asset.AssetDef = None):
-        self.asset_title.setText(asset.title())
-        self.asset_type.setText(asset.assetType())
+    def setIntialData(self, assetObj: asset.Asset, version: str = None, asset_def: asset.AssetDef = None):
+        self.asset_title.setText(assetObj.title())
+        self.asset_type.setText(assetObj.assetType())
         if asset_def:
             if version:
-                self.asset_version.setText(version)
-                # disabe version edit
-                self.asset_version.setEnabled(False)
-            self.asset_description.setText(asset_def.description)
+                ver = asset.Version(version)
+                self.asset_major.setValue(ver.version[0])
+                self.asset_minor.setValue(ver.version[1])
+            self.asset_description.setText(asset_def.description())
 
     def data(self) -> EditAssetFormData:
         return {
             'type': self.asset_type.text(),
             'title': self.asset_title.text(),
             'tags': self.getTags(),
-            'version': self.asset_version.text(),
+            'version': str(asset.Version(self.asset_major.value(), self.asset_minor.value())),
             'description': self.asset_description.toPlainText()
         }
 
@@ -389,15 +444,23 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
     def clearDef(self):
         self.asset_description.setText('-')
         self.asset_createdDate.setText('-')
+        self._assetDef = None
 
     def setAssetDef(self, defObj: typing.Union[asset.AssetDef, None]):
         if defObj is None:
             # clear asset def fields
             self.clearDef()
         else:
+            self._assetDef = defObj
             # fill description, createdDate, tags
             self.asset_description.setText(defObj.description() or '-')
             self.asset_createdDate.setText(self.formatDate(defObj.createdOn()))
+
+    def getCurrentAsset(self):
+        return self._asset
+
+    def getCurrentAssetDef(self):
+        return self._assetDef
 
     @staticmethod
     def formatDate(timestamp):

@@ -61,11 +61,6 @@ class Ui_EditAsset(object):
 
         self.formLayout.setWidget(2, QFormLayout.LabelRole, self.lb_version)
 
-        self.asset_version = QLineEdit(EditAsset)
-        self.asset_version.setObjectName(u"asset_version")
-
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.asset_version)
-
         self.lb_tags = QLabel(EditAsset)
         self.lb_tags.setObjectName(u"lb_tags")
 
@@ -89,7 +84,7 @@ class Ui_EditAsset(object):
         self.lb_preview = QLabel(EditAsset)
         self.lb_preview.setObjectName(u"lb_preview")
 
-        self.formLayout.setWidget(5, QFormLayout.LabelRole, self.lb_preview)
+        self.formLayout.setWidget(6, QFormLayout.LabelRole, self.lb_preview)
 
         self.preview_layout = QHBoxLayout()
         self.preview_layout.setObjectName(u"preview_layout")
@@ -137,7 +132,33 @@ class Ui_EditAsset(object):
         self.preview_layout.addItem(self.horizontalSpacer)
 
 
-        self.formLayout.setLayout(5, QFormLayout.FieldRole, self.preview_layout)
+        self.formLayout.setLayout(6, QFormLayout.FieldRole, self.preview_layout)
+
+        self.lb_changes = QLabel(EditAsset)
+        self.lb_changes.setObjectName(u"lb_changes")
+
+        self.formLayout.setWidget(5, QFormLayout.LabelRole, self.lb_changes)
+
+        self.asset_changes = QTextEdit(EditAsset)
+        self.asset_changes.setObjectName(u"asset_changes")
+
+        self.formLayout.setWidget(5, QFormLayout.FieldRole, self.asset_changes)
+
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.asset_major = QSpinBox(EditAsset)
+        self.asset_major.setObjectName(u"asset_major")
+        self.asset_major.setMinimum(1)
+
+        self.horizontalLayout.addWidget(self.asset_major)
+
+        self.asset_minor = QSpinBox(EditAsset)
+        self.asset_minor.setObjectName(u"asset_minor")
+
+        self.horizontalLayout.addWidget(self.asset_minor)
+
+
+        self.formLayout.setLayout(2, QFormLayout.FieldRole, self.horizontalLayout)
 
 
         self.formLayout_2.setLayout(0, QFormLayout.SpanningRole, self.formLayout)
@@ -169,5 +190,6 @@ class Ui_EditAsset(object):
         self.btn_capture.setText(QCoreApplication.translate("EditAsset", u"Capture", None))
         self.btn_choose.setText(QCoreApplication.translate("EditAsset", u"Choose..", None))
         self.btn_clear.setText(QCoreApplication.translate("EditAsset", u"Clear", None))
+        self.lb_changes.setText(QCoreApplication.translate("EditAsset", u"Changes", None))
     # retranslateUi
 

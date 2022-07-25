@@ -9,7 +9,6 @@ import typing
 from . import shimhou as hou
 import string
 import re
-from distutils.version import StrictVersion
 
 
 def resourcePath(relpath: str) -> str:
@@ -225,7 +224,14 @@ class Asset:
             self._tags = ensureTagList(data.get('tags', []))
             self._assetType = data.get('assetType')
             res = data.get('resolves', {})
-            self._resolves = {k: str(v) for k, v in res.items()}
+            newres = {}
+            for k, v in res.items():
+                try:
+                    ver = str(Version(k))
+                    newres[ver] = str(v)
+                except ValueError:
+                    continue
+            self._resolves = newres
 
     @staticmethod
     def schemaVersion() -> int:
@@ -281,7 +287,7 @@ class Asset:
     def sortedVersions(self):
         if self._sortedVersions is None:
             versions = list(self.versions())
-            versions.sort(key=StrictVersion)
+            versions.sort(key=Version)
             self._sortedVersions = versions
         return self._sortedVersions
 
@@ -414,6 +420,44 @@ valid_chars = ".%s%s" % (string.ascii_letters, string.digits)
 
 def cleanVersionString(version: str) -> str:
     return ''.join(c for c in version if c in valid_chars)
+
+
+class Version:
+    version_re = re.compile(r'^(\d+) \. (\d+)$',
+                            re.VERBOSE | re.ASCII)
+
+    def __init__(self, *args) -> None:
+        self.version = tuple()
+        if len(args) == 1 and isinstance(args[0], str):
+            self.parse(args[0])
+        elif len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
+            self.version = (args[0], args[1])
+        else:
+            raise Exception(
+                'invalid argument to construct Version %s' % str(args))
+
+    def parse(self, version: str):
+        match = self.version_re.match(version)
+
+        if not match:
+            raise ValueError("invalid version number '%s'" % version)
+
+        (major, minor) = match.group(1, 2)
+        self.version = tuple(map(int, [major, minor]))
+
+    def __str__(self) -> str:
+        return '%s.%s' % self.version
+
+    def _cmp(self, other):
+        if isinstance(other, str):
+            other = Version(other)
+
+        if self.version < other.version:
+            return -1
+        elif self.version > other.version:
+            return 1
+        else:
+            return 0
 
 
 def splitTags(text: str) -> typing.List[str]:
