@@ -6,14 +6,28 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>384</width>
-    <height>448</height>
+    <width>333</width>
+    <height>283</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QScrollArea {
+border: 0px solid green;
+}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
@@ -67,11 +81,48 @@
       <widget class="QScrollArea" name="scrollArea">
        <property name="styleSheet">
         <string notr="true">QLabel[type=&quot;0&quot;] {
-	color: rgb(158, 158, 158);
+	color: rgb(120, 120, 120);
+	font-size: 10px;
+	margin-bottom: 0;
 }
 
 QLabel[type=&quot;1&quot;] {
 	margin-bottom: 4px;
+}
+
+QScrollBar:vertical
+    {
+        background-color:rgb(68, 68, 68);
+        width: 10px;
+        margin: 0px 3px 0px 3px;
+        border: 1px transparent #2A2929;
+        border-radius: 4px;
+    }
+
+    QScrollBar::handle:vertical
+    {
+        background-color: rgb(86, 86, 86);
+        min-height: 5px;
+        border-radius: 4px;
+    }
+
+QScrollBar::sub-line:vertical
+{
+	 border: none;
+	background: none;
+}
+
+QScrollBar::add-line:vertical
+{
+	border: none;
+	background: none;
+ }
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical
+{
+	 border: none;
+     background: none;
+     color: none;
 }</string>
        </property>
        <property name="frameShape">
@@ -85,27 +136,20 @@ QLabel[type=&quot;1&quot;] {
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>364</width>
-          <height>376</height>
+          <width>312</width>
+          <height>297</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="spacing">
+          <number>2</number>
+         </property>
          <property name="leftMargin">
           <number>0</number>
          </property>
-         <item>
-          <widget class="QLabel" name="lb_description">
-           <property name="styleSheet">
-            <string notr="true"/>
-           </property>
-           <property name="text">
-            <string>Description</string>
-           </property>
-           <property name="type" stdset="0">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QLabel" name="asset_description">
            <property name="text">

@@ -17,9 +17,13 @@ class Ui_AssetInfo(object):
     def setupUi(self, AssetInfo):
         if not AssetInfo.objectName():
             AssetInfo.setObjectName(u"AssetInfo")
-        AssetInfo.resize(384, 448)
+        AssetInfo.resize(333, 283)
+        AssetInfo.setStyleSheet(u"QScrollArea {\n"
+"border: 0px solid green;\n"
+"}")
         self.verticalLayout_2 = QVBoxLayout(AssetInfo)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(-1, 0, 0, 0)
         self.verticalLayout_3 = QVBoxLayout()
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.asset_name = QLabel(AssetInfo)
@@ -51,27 +55,58 @@ class Ui_AssetInfo(object):
         self.scrollArea = QScrollArea(AssetInfo)
         self.scrollArea.setObjectName(u"scrollArea")
         self.scrollArea.setStyleSheet(u"QLabel[type=\"0\"] {\n"
-"	color: rgb(158, 158, 158);\n"
+"	color: rgb(120, 120, 120);\n"
+"	font-size: 10px;\n"
+"	margin-bottom: 0;\n"
 "}\n"
 "\n"
 "QLabel[type=\"1\"] {\n"
 "	margin-bottom: 4px;\n"
+"}\n"
+"\n"
+"QScrollBar:vertical\n"
+"    {\n"
+"        background-color:rgb(68, 68, 68);\n"
+"        width: 10px;\n"
+"        margin: 0px 3px 0px 3px;\n"
+"        border: 1px transparent #2A2929;\n"
+"        border-radius: 4px;\n"
+"    }\n"
+"\n"
+"    QScrollBar::handle:vertical\n"
+"    {\n"
+"        background-color: rgb(86, 86, 86);\n"
+"        min-height: 5px;\n"
+"        border-radius: 4px;\n"
+"    }\n"
+"\n"
+"QScrollBar::sub-line:vertical\n"
+"{\n"
+"	 border: none;\n"
+"	background: none;\n"
+"}\n"
+"\n"
+"QScrollBar::add-line:vertical\n"
+"{\n"
+"	border: none;\n"
+"	background: none;\n"
+" }\n"
+"\n"
+"QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical\n"
+"{\n"
+"	 border: none;\n"
+"     background: none;\n"
+"     color: none;\n"
 "}")
         self.scrollArea.setFrameShape(QFrame.NoFrame)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 364, 376))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 312, 297))
         self.verticalLayout_4 = QVBoxLayout(self.scrollAreaWidgetContents_2)
+        self.verticalLayout_4.setSpacing(2)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(0, -1, -1, -1)
-        self.lb_description = QLabel(self.scrollAreaWidgetContents_2)
-        self.lb_description.setObjectName(u"lb_description")
-        self.lb_description.setStyleSheet(u"")
-        self.lb_description.setProperty("type", 0)
-
-        self.verticalLayout_4.addWidget(self.lb_description)
-
+        self.verticalLayout_4.setContentsMargins(0, 0, -1, -1)
         self.asset_description = QLabel(self.scrollAreaWidgetContents_2)
         self.asset_description.setObjectName(u"asset_description")
         self.asset_description.setWordWrap(True)
@@ -137,7 +172,6 @@ class Ui_AssetInfo(object):
         AssetInfo.setWindowTitle(QCoreApplication.translate("AssetInfo", u"Form", None))
         self.asset_name.setText(QCoreApplication.translate("AssetInfo", u"Asset Name", None))
         self.asset_versionSelect.setCurrentText("")
-        self.lb_description.setText(QCoreApplication.translate("AssetInfo", u"Description", None))
         self.asset_description.setText(QCoreApplication.translate("AssetInfo", u"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eget volutpat velit, ut vulputate ligula. Donec placerat nulla vitae dolor ultrices, et mollis enim mattis. Ut egestas quam ex, quis tincidunt arcu tempus vel. Nullam dictum, enim nec tristique porttitor, ante ligula volutpat neque, sed fringilla ligula purus eget risus. Donec velit nisi, dictum ac suscipit vel, tincidunt eget lorem. Fusce arcu turpis, suscipit at convallis eu, efficitur at urna. Curabitur lorem tortor, blandit a metus sit amet, lobortis hendrerit massa. Suspendisse molestie justo vitae malesuada commodo. Fusce euismod leo id arcu semper, at finibus velit fermentum.", None))
         self.lb_changes.setText(QCoreApplication.translate("AssetInfo", u"Changes", None))
         self.asset_changes.setText(QCoreApplication.translate("AssetInfo", u"- shome changes", None))
