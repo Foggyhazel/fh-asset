@@ -103,7 +103,7 @@ class AssetBrowser(QWidget):
         self.listWidget = list
 
         # info
-        info = AssetInfoWidget()
+        info = AssetInfoWidget(file_model=model)
         self.infoWidget = info
 
         # laying out
@@ -446,10 +446,11 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
 
 
 class AssetInfoWidget(QWidget, Ui_AssetInfo):
-    def __init__(self, parent: typing.Optional[QWidget] = None):
+    def __init__(self, file_model: AssetFileModel, parent: typing.Optional[QWidget] = None):
         super().__init__(parent)
         self.setupUi(self)
         self.clear()
+        self._file_model = file_model
 
         # set signal
         self.asset_versionSelect.currentIndexChanged.connect(
@@ -470,6 +471,11 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
 
         defObj = self._asset.resolveVersion(version).getDef()
         self.setAssetDef(defObj)
+
+        # set selected version to file model
+        if self._asset:
+            self._file_model.setSelectedVersion(
+                self._asset.ref().absAssetDir(), version)
 
     def clear(self):
         self._asset = None

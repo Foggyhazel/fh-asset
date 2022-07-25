@@ -1,8 +1,8 @@
 import typing
 from os import path as opath
 from PySide2.QtWidgets import QFileSystemModel
-from PySide2.QtCore import QModelIndex, Qt, QSortFilterProxyModel, QMimeData, QByteArray
-from PySide2.QtGui import QColor, QIcon
+from PySide2.QtCore import *
+from PySide2.QtGui import *
 from . import asset, config
 
 mimeTypes = {
@@ -11,6 +11,10 @@ mimeTypes = {
 
 
 class AssetFileModel(QFileSystemModel):
+    def __init__(self, parent=None) -> None:
+        self._selectedVersion = {}
+        super().__init__(parent)
+
     def hasChildren(self, parent: QModelIndex = ...) -> bool:
         """
         If parent is an asset folder, do not show its content
@@ -36,6 +40,14 @@ class AssetFileModel(QFileSystemModel):
     def mimeTypes(self) -> typing.List:
         return [mimeTypes['assetItem']]
 
+    def setSelectedVersion(self, abs_assetDir: str, version: str):
+        k = opath.normpath(abs_assetDir)
+        self._selectedVersion[k] = version
+
+    def getSelectedVersion(self, abs_assetDir: str) -> typing.Union[str, None]:
+        k = opath.normpath(abs_assetDir)
+        return self._selectedVersion.get(k, None)
+
     def mimeData(self, indexes: typing.List[QModelIndex]) -> QMimeData:
         item_paths = []
         for index in indexes:
@@ -47,11 +59,27 @@ class AssetFileModel(QFileSystemModel):
 
             item_paths.append(path)
 
+        mimeData = QMimeData()
+
+        if not len(item_paths):
+            mimeData.setUrls([])
+            return mimeData
+
         path_str = '\t'.join(item_paths)
         data = QByteArray(bytes(path_str, 'utf-8'))
-        mimeData = QMimeData()
+
+        # mark drag drop data as coming from asset browser.
+        # the actual data does not matter as houdini cannot read it anyway
         mimeData.setData(mimeTypes['assetItem'], data)
-        mimeData.setUrls(item_paths)
+
+        # set url to [path@version]
+        path = item_paths[0]
+        ver = self.getSelectedVersion(path)
+
+        if ver:
+            path = path + '?version=%s' % ver
+
+        mimeData.setUrls([path])
         return mimeData
 
 
