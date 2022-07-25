@@ -123,6 +123,26 @@ QLabel[type=&quot;1&quot;] {
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="lb_changes">
+           <property name="text">
+            <string>Changes</string>
+           </property>
+           <property name="type" stdset="0">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="asset_changes">
+           <property name="text">
+            <string>- shome changes</string>
+           </property>
+           <property name="type" stdset="0">
+            <number>1</number>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QLabel" name="lb_createdDate">
            <property name="text">
             <string>Created</string>
@@ -156,26 +176,6 @@ QLabel[type=&quot;1&quot;] {
           <widget class="QLabel" name="asset_tags">
            <property name="text">
             <string>tagA, tagB, C</string>
-           </property>
-           <property name="type" stdset="0">
-            <number>1</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="lb_changes">
-           <property name="text">
-            <string>Changes</string>
-           </property>
-           <property name="type" stdset="0">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="asset_changes">
-           <property name="text">
-            <string>- shome changes</string>
            </property>
            <property name="type" stdset="0">
             <number>1</number>

@@ -80,6 +80,18 @@ class Ui_AssetInfo(object):
 
         self.verticalLayout_4.addWidget(self.asset_description)
 
+        self.lb_changes = QLabel(self.scrollAreaWidgetContents_2)
+        self.lb_changes.setObjectName(u"lb_changes")
+        self.lb_changes.setProperty("type", 0)
+
+        self.verticalLayout_4.addWidget(self.lb_changes)
+
+        self.asset_changes = QLabel(self.scrollAreaWidgetContents_2)
+        self.asset_changes.setObjectName(u"asset_changes")
+        self.asset_changes.setProperty("type", 1)
+
+        self.verticalLayout_4.addWidget(self.asset_changes)
+
         self.lb_createdDate = QLabel(self.scrollAreaWidgetContents_2)
         self.lb_createdDate.setObjectName(u"lb_createdDate")
         self.lb_createdDate.setProperty("type", 0)
@@ -104,18 +116,6 @@ class Ui_AssetInfo(object):
 
         self.verticalLayout_4.addWidget(self.asset_tags)
 
-        self.lb_changes = QLabel(self.scrollAreaWidgetContents_2)
-        self.lb_changes.setObjectName(u"lb_changes")
-        self.lb_changes.setProperty("type", 0)
-
-        self.verticalLayout_4.addWidget(self.lb_changes)
-
-        self.asset_changes = QLabel(self.scrollAreaWidgetContents_2)
-        self.asset_changes.setObjectName(u"asset_changes")
-        self.asset_changes.setProperty("type", 1)
-
-        self.verticalLayout_4.addWidget(self.asset_changes)
-
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout_4.addItem(self.verticalSpacer)
@@ -139,11 +139,11 @@ class Ui_AssetInfo(object):
         self.asset_versionSelect.setCurrentText("")
         self.lb_description.setText(QCoreApplication.translate("AssetInfo", u"Description", None))
         self.asset_description.setText(QCoreApplication.translate("AssetInfo", u"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eget volutpat velit, ut vulputate ligula. Donec placerat nulla vitae dolor ultrices, et mollis enim mattis. Ut egestas quam ex, quis tincidunt arcu tempus vel. Nullam dictum, enim nec tristique porttitor, ante ligula volutpat neque, sed fringilla ligula purus eget risus. Donec velit nisi, dictum ac suscipit vel, tincidunt eget lorem. Fusce arcu turpis, suscipit at convallis eu, efficitur at urna. Curabitur lorem tortor, blandit a metus sit amet, lobortis hendrerit massa. Suspendisse molestie justo vitae malesuada commodo. Fusce euismod leo id arcu semper, at finibus velit fermentum.", None))
+        self.lb_changes.setText(QCoreApplication.translate("AssetInfo", u"Changes", None))
+        self.asset_changes.setText(QCoreApplication.translate("AssetInfo", u"- shome changes", None))
         self.lb_createdDate.setText(QCoreApplication.translate("AssetInfo", u"Created", None))
         self.asset_createdDate.setText(QCoreApplication.translate("AssetInfo", u"16 Sep 2020", None))
         self.lb_tags.setText(QCoreApplication.translate("AssetInfo", u"Tags", None))
         self.asset_tags.setText(QCoreApplication.translate("AssetInfo", u"tagA, tagB, C", None))
-        self.lb_changes.setText(QCoreApplication.translate("AssetInfo", u"Changes", None))
-        self.asset_changes.setText(QCoreApplication.translate("AssetInfo", u"- shome changes", None))
     # retranslateUi
 

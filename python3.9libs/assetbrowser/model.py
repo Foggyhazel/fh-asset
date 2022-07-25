@@ -53,7 +53,6 @@ class AssetFileModel(QFileSystemModel):
         mimeData.setData(mimeTypes['assetItem'], data)
         mimeData.setUrls(item_paths)
         return mimeData
-        return super().mimeData(indexes)
 
 
 class FilterAssetDir(QSortFilterProxyModel):
