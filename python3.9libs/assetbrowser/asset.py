@@ -115,9 +115,6 @@ class Ref:
     def absAssetDir(self) -> str:
         return opath.join(config.root_path, self.asset_folder)
 
-    def absDefDir(self) -> str:
-        return opath.join(config.root_path, self.asset_folder, self.def_folder)
-
     def absDefFile(self) -> typing.Union[str, None]:
         """Get absolute path to asset def json file. None if not set as asset def ref
 
@@ -156,14 +153,8 @@ class Ref:
     def existAsset(self) -> bool:
         return opath.isfile(self.absAssetFile())
 
-    def get(self):
-        if not self.exist():
-            return None
-
-        if self.isAssetDef():
-            return self.getDef()
-        else:
-            return self.getAsset()
+    def existDef(self) -> bool:
+        return opath.isfile(self.absDefFile())
 
     def getAsset(self):
         """Get asset referenced by this ref, no matter if this is asset ref or def ref
@@ -280,8 +271,12 @@ class Asset:
     def versions(self) -> typing.Tuple[str, ...]:
         return tuple(self._resolves.keys())
 
-    def resolveVersion(self, version_label: str) -> typing.Union[str, None]:
-        return self._resolves.get(version_label, None)
+    def resolveVersion(self, version_label: str) -> typing.Union[Ref, None]:
+        version_path = self._resolves.get(version_label, None)
+        if not version_path:
+            return None
+
+        return self._ref.toDef(version_path)
 
     def sortedVersions(self):
         if self._sortedVersions is None:

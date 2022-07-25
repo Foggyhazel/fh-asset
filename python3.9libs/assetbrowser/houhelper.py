@@ -46,7 +46,7 @@ def dumpNodeItemsToFile(items: typing.List[str], abs_file_path: str):
 
 def loadAsset(assetObj: asset.Asset, node: hou.Node, version_label=None):
     v = version_label or assetObj.latestVersion()
-    defObj = asset.getDef(assetObj, assetObj.resolveVersion(v))
+    defObj = assetObj.resolveVersion(v).getDef()
     if not defObj:
         logging.warning('Cannot load asset %s@%s' % (assetObj.title(), v))
         return

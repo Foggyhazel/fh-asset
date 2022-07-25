@@ -2,6 +2,8 @@ import logging
 import typing
 
 from assetbrowser import houhelper
+
+from assetbrowser import createAsset
 try:
     from typing import TypedDict
 except ImportError:
@@ -14,6 +16,7 @@ from PySide2.QtWidgets import (
     QSplitter,
     QLabel,
     QVBoxLayout,
+    QHBoxLayout,
     QListView,
     QStyledItemDelegate,
     QStyleOptionViewItem,
@@ -115,9 +118,17 @@ class AssetBrowser(QWidget):
         layout.addWidget(splitter)
 
         # debug
+        debug_widget = QWidget()
+        debug_layout = QHBoxLayout()
+        debug_widget.setLayout(debug_layout)
+        layout.addWidget(debug_widget)
+
         btn = QPushButton('show form')
         btn.clicked.connect(self.handleShowPress)
-        layout.addWidget(btn)
+        load_btn = QPushButton('load asset')
+        load_btn.clicked.connect(self.handleLoadPress)
+        debug_layout.addWidget(btn)
+        debug_layout.addWidget(load_btn)
 
         self.setLayout(layout)
 
@@ -126,6 +137,12 @@ class AssetBrowser(QWidget):
 
     def updateFileView(self, index: QModelIndex):
         self.listWidget.setRootIndex(index.siblingAtColumn(0))
+
+    def getCurrentAsset(self):
+        index = self.listWidget.currentIndex()
+        asset_path = self.model.filePath(index)
+        asset_obj = asset.getAsset(asset_path)
+        return asset_obj
 
     def updateInfoView(self, asset_path: str):
         info = asset.getAsset(asset_path)
@@ -190,8 +207,20 @@ class AssetBrowser(QWidget):
                 }
                 self.beginCreateAsset(payload, self.getCurrentDirectory())
 
+# region Debug
+    def handleLoadPress(self):
+        asset_obj = self.getCurrentAsset()
+        print('loading', asset_obj.title())
+        houhelper.loadAsset(asset_obj, node=hou.Node())
+        pass
+# endregion
+
     def handleShowPress(self):
-        self.beginCreateAsset([''], self.getCurrentDirectory())
+        payload: Payload = {
+            'type': PayloadType.Any,
+            'data': ['']
+        }
+        self.beginCreateAsset(payload, self.getCurrentDirectory())
 
     def beginCreateAsset(self, payload: Payload, path_to_create_in: str):
         def onSavePress(data: EditAssetFormData):
@@ -202,15 +231,21 @@ class AssetBrowser(QWidget):
             p = opath.join(path_to_create_in, asset_folder)
 
             ref = asset.Ref.fromAbsPath(p)
+            version = asset.cleanVersionString(data['version'])
+            defRef = ref.toDef(version)
+
+            if ref.existAsset():
+                raise Exception("Asset already exists")
+            if defRef.existDef():
+                raise Exception("Asset definition already exists")
 
             assetObj = asset.Asset(ref)
             assetObj.setData(type=data['type'],
                              title=data['title'], tags=data['tags'])
-            version = asset.cleanVersionString(data['version'])
             assetObj.setOrAddVersion(version, version)
 
             # create asset def
-            assetDefObj = asset.AssetDef(ref.toDef(version))
+            assetDefObj = asset.AssetDef(defRef)
             content = processCreateAssetPayload(payload, assetDefObj)
             assetDefObj.setData(
                 description=data['description'], createdOn=time.time(), content=content)
@@ -221,8 +256,17 @@ class AssetBrowser(QWidget):
 
             alert(self, 'Asset Saved', 'Asset save', QMessageBox.Ok)
             self.editAsset.close()
+
+        try:
+            asset_type = asset_type = createAsset.determineAssetTypeFromPayload(
+                payload)
+        except Exception as e:
+            alert(self, 'Cannot Create Asset', str(e))
+            return
+
         w = EditAssetWindow(mode=EditAssetWindow.Mode.New,
-                            onSavePress=onSavePress)
+                            onSavePress=onSavePress,
+                            asset_type=asset_type)
         # maintain reference so it's not destroyed immediately
         self.editAsset = w
         if 'qt' in dir(hou):

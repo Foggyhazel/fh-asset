@@ -1,9 +1,5 @@
 from enum import Enum
 import typing
-try:
-    from typing import TypedDict
-except ImportError:
-    from .typing_extensions import TypedDict
 from os import path as opath
 from . import houhelper
 from .asset import AssetDef
@@ -11,11 +7,31 @@ from .asset import AssetDef
 
 class PayloadType(Enum):
     NetworkItems = 0
+    Any = 1
 
 
-class Payload(TypedDict):
+class Payload(typing.TypedDict):
     type: PayloadType
     data: typing.Any
+
+
+def determineAssetTypeFromPayload(payload: Payload) -> str:
+    t = payload['type']
+    if t == PayloadType.NetworkItems:
+        # get type from network type
+        try:
+            first_node = payload['data'][0]
+            network_type = houhelper.getNetworkType(first_node)
+            return 'network/%s' % network_type
+        except Exception as e:
+            raise Exception(
+                'Cannot determine network type of node "%s"' % first_node)
+
+    elif t == PayloadType.Any:
+        # for debug
+        return 'any'
+    else:
+        raise Exception('Unsupported asset type %s' % t)
 
 
 def processCreateAssetPayload(payload: Payload, asset_def: AssetDef) -> str:
