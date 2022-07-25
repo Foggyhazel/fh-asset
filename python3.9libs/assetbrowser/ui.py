@@ -350,8 +350,10 @@ class AssetBrowser(QWidget):
 
         w = EditAssetWindow(mode=EditAssetWindow.Mode.Edit,
                             asset_type=asset_type,
+
                             onSavePress=onSavePress)
-        w.setIntialData(current_asset, None, current_def)
+        w.setIntialData(assetObj=current_asset, version=self.infoWidget.getSelectedVersion(
+        ), asset_def=current_def)
         # maintain reference so it's not destroyed immediately
         self.editAsset = w
         if 'qt' in dir(hou):
@@ -406,11 +408,11 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
     def setIntialData(self, assetObj: asset.Asset, version: str = None, asset_def: asset.AssetDef = None):
         self.asset_title.setText(assetObj.title())
         self.asset_type.setText(assetObj.assetType())
+        if version:
+            ver = asset.Version(version)
+            self.asset_major.setValue(ver.version[0])
+            self.asset_minor.setValue(ver.version[1])
         if asset_def:
-            if version:
-                ver = asset.Version(version)
-                self.asset_major.setValue(ver.version[0])
-                self.asset_minor.setValue(ver.version[1])
             self.asset_description.setText(asset_def.description())
 
     def data(self) -> EditAssetFormData:
@@ -522,6 +524,12 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
 
     def getCurrentAssetDef(self):
         return self._assetDef
+
+    def getSelectedVersion(self):
+        try:
+            return self._versions[self.asset_versionSelect.currentIndex()]
+        except:
+            return None
 
     @staticmethod
     def formatDate(timestamp):
