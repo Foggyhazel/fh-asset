@@ -1,10 +1,10 @@
 {
     "python.autoComplete.extraPaths": [
-        "C:/Program Files/Side Effects Software/Houdini 19.0.548/houdini/python3.7libs",
+        "C:/Program Files/Side Effects Software/Houdini 19.5.303/houdini/python3.9libs",
         "${workspaceFolder}/python3.9libs"
     ],
     "python.analysis.extraPaths": [
-        "C:/Program Files/Side Effects Software/Houdini 19.0.548/houdini/python3.7libs",
+        "C:/Program Files/Side Effects Software/Houdini 19.5.303/houdini/python3.9libs",
         "${workspaceFolder}/python3.9libs"
     ],
     "qtForPython.lupdate.liveExecution": false,

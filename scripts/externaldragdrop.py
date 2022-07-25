@@ -16,7 +16,7 @@ def dropAccept(files):
 
 def tryLoadAsset(files):
     pane = hou.ui.paneTabUnderCursor()
-    node = pane.pwd()
+    node: hou.Node = pane.pwd()
     if not len(files):
         return
 
@@ -26,12 +26,45 @@ def tryLoadAsset(files):
 
     # drop on network view
     if (pane.type().name() == "NetworkEditor"):
+        neteditor: hou.NetworkEditor = pane
         assetObj = asset.getAsset(p['file'])
         if not assetObj:
             logging.warning('Asset %s not found' % item_to_load)
             return
+        # clear selection
+        node.setSelected(False, True)
+        # load content from file
         houhelper.loadAsset(assetObj=assetObj, node=node,
                             version_label=p['version'])
+
+        moveSelectedToPosition(node, neteditor.cursorPosition())
+
+
+def moveSelectedToPosition(container: hou.node, position: hou.Vector2):
+    items = container.selectedItems()
+    nodes = container.selectedChildren()
+
+    if len(nodes):
+        # use root node to calculate move position
+        root_node = hou.sortedNodes(nodes)[0]
+        curr_pos = root_node.position()
+    elif len(items):
+        # no node places, only some network items
+        # use first item for positioning
+        curr_pos = items[0].position()
+    else:
+        return
+
+    delta = position - curr_pos
+
+    # move all items by delta
+    # do not use move/setPosition successively
+    # as that will move nodes inside network box twice
+    allPos = []
+    for item in items:
+        allPos.append(item.position())
+    for (i, item) in enumerate(items):
+        item.setPosition(allPos[i] + delta)
 
 
 def parseAssetUrl(url: str):
