@@ -213,9 +213,12 @@ class AssetBrowser(QWidget):
                 }
                 self.beginEditAsset(payload)
 
+    def reloadCurrentAsset(self):
+        index = self.listWidget.currentIndex()
+        path = self.model.filePath(index)
+        self.updateInfoView(path)
 
 # region Debug
-
 
     def handleLoadPress(self):
         asset_obj = self.getCurrentAsset()
@@ -334,6 +337,9 @@ class AssetBrowser(QWidget):
 
             alert(self, 'Asset Updated', 'Asset Updated', QMessageBox.Ok)
             self.editAsset.close()
+
+            # reload asset
+            self.reloadCurrentAsset()
 
         try:
             asset_type = asset_type = createAsset.determineAssetTypeFromPayload(
