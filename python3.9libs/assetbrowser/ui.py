@@ -10,31 +10,18 @@ except ImportError:
     from .typing_extensions import TypedDict
 from enum import Enum
 from os import path as opath
-from PySide2.QtWidgets import (
-    QTreeView,
-    QWidget,
-    QSplitter,
-    QLabel,
-    QVBoxLayout,
-    QHBoxLayout,
-    QListView,
-    QStyledItemDelegate,
-    QStyleOptionViewItem,
-    QPushButton,
-    QMessageBox,
-    QAbstractItemView
-)
-from PySide2.QtCore import QModelIndex, Qt, QItemSelection, QSize
-from PySide2.QtGui import QPainter, QDragEnterEvent, QDropEvent
-from PySide2.QtWidgets import QWidget
-from PySide2.QtGui import QCloseEvent
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
 
 from .createAsset import Payload, PayloadType, processCreateAssetPayload
 from . import asset
 from . import config
 from .ui_editAsset import Ui_EditAsset
+from .ui_assetInfo import Ui_AssetInfo
 from .model import AssetFileModel, FilterAssetDir
 import time
+import datetime
 
 try:
     import hou
@@ -104,8 +91,7 @@ class AssetBrowser(QWidget):
         self.listWidget = list
 
         # info
-        info = QLabel('Select an asset')
-        info.setWordWrap(True)
+        info = AssetInfoWidget()
         self.infoWidget = info
 
         # laying out
@@ -147,8 +133,7 @@ class AssetBrowser(QWidget):
     def updateInfoView(self, asset_path: str):
         info = asset.getAsset(asset_path)
         # houhelper.loadAsset(info, None)
-        self.infoWidget.setText('latest: %s \ninfo:\n %s' % (
-            info.latestVersion(),  str(info)) if info else 'Select an asset..')
+        self.infoWidget.setAsset(info)
 
     def handleTreeSelectionChanged(self, selected: QItemSelection, deselected):
         self.updateFileView(self.getCurrentFileModelIndex())
@@ -345,3 +330,76 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
 
     def handleClose(self):
         self.close()
+
+
+class AssetInfoWidget(QWidget, Ui_AssetInfo):
+    def __init__(self, parent: typing.Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.clear()
+
+        # set signal
+        self.asset_versionSelect.currentIndexChanged.connect(
+            self.handleVersionChanged)
+
+    def handleVersionChanged(self, index):
+        if index < 0:
+            # items are cleared
+            return
+        if not self._asset:
+            return
+
+        try:
+            version = self._versions[index]
+        except IndexError:
+            return
+
+        defObj = self._asset.resolveVersion(version).getDef()
+        self.setAssetDef(defObj)
+
+    def clear(self):
+        self._asset = None
+        self._assetDef = None
+        self._versions = []
+        self.asset_name.setText('-')
+        self.asset_versionSelect.clear()
+        self.asset_description.setText('-')
+        self.asset_createdDate.setText('-')
+        self.asset_tags.setText('-')
+        self.asset_changes.setText('-')
+
+    def setAsset(self, assetObj: typing.Union[asset.Asset, None]):
+        if assetObj is None:
+            self.clear()
+        else:
+            self._asset = assetObj
+            versions = assetObj.versions()
+            self._versions = versions
+
+            self.asset_name.setText(assetObj.title())
+
+            # fill version selector
+            self.asset_versionSelect.clear()
+            latest = assetObj.latestVersion()
+            self.asset_versionSelect.addItems(
+                ['%s (latest)' % v if v == latest else v for v in versions])
+            tags = assetObj.tags()
+            self.asset_tags.setText(', '.join(tags) if len(tags) else '-')
+
+    def clearDef(self):
+        self.asset_description.setText('-')
+        self.asset_createdDate.setText('-')
+
+    def setAssetDef(self, defObj: typing.Union[asset.AssetDef, None]):
+        if defObj is None:
+            # clear asset def fields
+            self.clearDef()
+        else:
+            # fill description, createdDate, tags
+            self.asset_description.setText(defObj.description() or '-')
+            self.asset_createdDate.setText(self.formatDate(defObj.createdOn()))
+
+    @staticmethod
+    def formatDate(timestamp):
+        date = datetime.date.fromtimestamp(timestamp)
+        return date.strftime('%c')
