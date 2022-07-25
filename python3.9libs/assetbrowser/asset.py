@@ -9,6 +9,7 @@ import typing
 from . import shimhou as hou
 import string
 import re
+from functools import total_ordering
 
 
 def resourcePath(relpath: str) -> str:
@@ -323,7 +324,8 @@ class AssetDef:
             description: string,
             createdOn: number,
             updatedOn: number,
-            content: string // file path, vex snippet, ramp etc
+            content: string, // file path, vex snippet, ramp etc
+            changes: string
         }
         ```
         """
@@ -334,6 +336,7 @@ class AssetDef:
             self._createdOn = None
             self._updatedOn = None
             self._content = None
+            self._changes = None
         else:
             if not '_schemaVersion' in data:
                 logging.warning('Missing schema version in %s got asset def %s' % (
@@ -347,8 +350,9 @@ class AssetDef:
             self._createdOn = data.get('createdOn')
             self._updatedOn = data.get('updatedOn')
             self._content = data.get('content')
+            self._changes = data.get('changes')
 
-    def setData(self, author=None, description=None, createdOn=None, updatedOn=None, content=None):
+    def setData(self, author=None, description=None, createdOn=None, updatedOn=None, content=None, changes=None):
         if author:
             self._author = author
         if description:
@@ -359,6 +363,8 @@ class AssetDef:
             self._updatedOn = updatedOn
         if content:
             self._content = content
+        if changes:
+            self._changes = changes
 
     @staticmethod
     def schemaVersion() -> int:
@@ -382,6 +388,9 @@ class AssetDef:
     def content(self) -> str:
         return self._content
 
+    def changes(self) -> str:
+        return self._changes
+
     def data(self) -> dict:
         return {
             '_schemaVersion': self.schemaVersion(),
@@ -390,7 +399,8 @@ class AssetDef:
             'description': self._description,
             'createdOn': self._createdOn,
             'updatedOn': self._updatedOn,
-            'content': self._content
+            'content': self._content,
+            'changes': self._changes
         }
 
     def __str__(self) -> str:
@@ -422,6 +432,7 @@ def cleanVersionString(version: str) -> str:
     return ''.join(c for c in version if c in valid_chars)
 
 
+@total_ordering
 class Version:
     version_re = re.compile(r'^(\d+) \. (\d+)$',
                             re.VERBOSE | re.ASCII)
@@ -448,16 +459,15 @@ class Version:
     def __str__(self) -> str:
         return '%s.%s' % self.version
 
-    def _cmp(self, other):
+    def __eq__(self, other) -> bool:
         if isinstance(other, str):
             other = Version(other)
+        return self.version == other.version
 
-        if self.version < other.version:
-            return -1
-        elif self.version > other.version:
-            return 1
-        else:
-            return 0
+    def __lt__(self, other) -> bool:
+        if isinstance(other, str):
+            other = Version(other)
+        return self.version < other.version
 
 
 def splitTags(text: str) -> typing.List[str]:

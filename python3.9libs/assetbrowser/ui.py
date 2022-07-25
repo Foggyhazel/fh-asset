@@ -38,14 +38,26 @@ def alert(parent, title: str, text: str, buttons=QMessageBox.Ok):
     msg.exec_()
 
 
+def warnConfirm(parent, title: str, text: str):
+    msg = QMessageBox(parent)
+    msg.setWindowTitle(title)
+    msg.setText(text)
+    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
+    msg.setIcon(QMessageBox.Warning)
+    button = msg.exec_()
+    return button == QMessageBox.Yes
+
+
 class AssetItem(QStyledItemDelegate):
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         return super().paint(painter, option, index)
 
 
 class AssetBrowser(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, show_debug=False) -> None:
         super().__init__()
+
+        self._show_debug = show_debug
 
         parent_of_root = opath.dirname(config.root_path)
 
@@ -104,17 +116,18 @@ class AssetBrowser(QWidget):
         layout.addWidget(splitter)
 
         # debug
-        debug_widget = QWidget()
-        debug_layout = QHBoxLayout()
-        debug_widget.setLayout(debug_layout)
-        layout.addWidget(debug_widget)
+        if self._show_debug:
+            debug_widget = QWidget()
+            debug_layout = QHBoxLayout()
+            debug_widget.setLayout(debug_layout)
+            layout.addWidget(debug_widget)
 
-        btn = QPushButton('show form')
-        btn.clicked.connect(self.handleShowPress)
-        load_btn = QPushButton('load asset')
-        load_btn.clicked.connect(self.handleLoadPress)
-        debug_layout.addWidget(btn)
-        debug_layout.addWidget(load_btn)
+            btn = QPushButton('show form')
+            btn.clicked.connect(self.handleShowPress)
+            load_btn = QPushButton('load asset')
+            load_btn.clicked.connect(self.handleLoadPress)
+            debug_layout.addWidget(btn)
+            debug_layout.addWidget(load_btn)
 
         self.setLayout(layout)
 
@@ -227,7 +240,7 @@ class AssetBrowser(QWidget):
             p = opath.join(path_to_create_in, asset_folder)
 
             ref = asset.Ref.fromAbsPath(p)
-            version = str(asset.Version(data['version']))
+            version = data['version']
             defRef = ref.toDef(version)
 
             if ref.existAsset():
@@ -295,8 +308,43 @@ class AssetBrowser(QWidget):
                   (current_asset.assetType(), asset_type))
             return
 
+        # save callback
+        def onSavePress(data: EditAssetFormData):
+            version = data['version']
+            defRef = current_asset.ref().toDef(version)
+
+            if defRef.existDef():
+                if not warnConfirm(self, 'Warning', 'The entered version already exists. Do you want to replace?'):
+                    return
+
+            current_asset.setOrAddVersion(version, version)
+
+            # create asset def
+            assetDefObj = asset.AssetDef(defRef)
+            content = processCreateAssetPayload(payload, assetDefObj)
+            assetDefObj.setData(
+                description=data['description'],
+                createdOn=time.time(),
+                content=content,
+                changes=data['changes'])
+
+            # save assetObj and asset def
+            asset.setAsset(current_asset)
+            asset.setDef(assetDefObj)
+
+            alert(self, 'Asset Updated', 'Asset Updated', QMessageBox.Ok)
+            self.editAsset.close()
+
+        try:
+            asset_type = asset_type = createAsset.determineAssetTypeFromPayload(
+                payload)
+        except Exception as e:
+            alert(self, 'Cannot Create Asset', str(e))
+            return
+
         w = EditAssetWindow(mode=EditAssetWindow.Mode.Edit,
-                            asset_type=asset_type)
+                            asset_type=asset_type,
+                            onSavePress=onSavePress)
         w.setIntialData(current_asset, None, current_def)
         # maintain reference so it's not destroyed immediately
         self.editAsset = w
@@ -312,6 +360,7 @@ class EditAssetFormData(TypedDict):
     version: str
     tags: typing.List[str]
     description: str
+    changes: str
 
 
 class EditAssetWindow(QWidget, Ui_EditAsset):
@@ -364,7 +413,8 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
             'title': self.asset_title.text(),
             'tags': self.getTags(),
             'version': str(asset.Version(self.asset_major.value(), self.asset_minor.value())),
-            'description': self.asset_description.toPlainText()
+            'description': self.asset_description.toPlainText(),
+            'changes': self.asset_changes.toPlainText()
         }
 
     def getTags(self) -> typing.List[str]:
@@ -407,6 +457,7 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
         try:
             version = self._versions[index]
         except IndexError:
+            print('index out of range')
             return
 
         defObj = self._asset.resolveVersion(version).getDef()
@@ -428,7 +479,9 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
             self.clear()
         else:
             self._asset = assetObj
-            versions = assetObj.versions()
+            versions = list(assetObj.versions())
+            # sort starting from latest
+            versions.sort(key=asset.Version, reverse=True)
             self._versions = versions
 
             self.asset_name.setText(assetObj.title())
@@ -444,6 +497,7 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
     def clearDef(self):
         self.asset_description.setText('-')
         self.asset_createdDate.setText('-')
+        self.asset_changes.setText('-')
         self._assetDef = None
 
     def setAssetDef(self, defObj: typing.Union[asset.AssetDef, None]):
@@ -455,6 +509,7 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
             # fill description, createdDate, tags
             self.asset_description.setText(defObj.description() or '-')
             self.asset_createdDate.setText(self.formatDate(defObj.createdOn()))
+            self.asset_changes.setText(defObj.changes())
 
     def getCurrentAsset(self):
         return self._asset
