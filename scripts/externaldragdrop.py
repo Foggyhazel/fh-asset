@@ -60,9 +60,7 @@ def moveSelectedToPosition(container: hou.node, position: hou.Vector2):
     # move all items by delta
     # do not use move/setPosition successively
     # as that will move nodes inside network box twice
-    allPos = []
-    for item in items:
-        allPos.append(item.position())
+    allPos = [item.position() for item in items]
     for (i, item) in enumerate(items):
         item.setPosition(allPos[i] + delta)
 

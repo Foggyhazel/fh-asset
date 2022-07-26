@@ -197,26 +197,22 @@ class AssetBrowser(QWidget):
         print('data', d)
 
     def dropEvent(self, event: QDropEvent) -> None:
+        item_data = event.mimeData().data(hou.qt._itemPathMimeType())
+        if item_data.isEmpty():
+            return
+
+        items = str(item_data, 'utf-8').split('\t')
+        payload = {
+            'type': PayloadType.NetworkItems,
+            'data': items
+        }
+
         if self.listWidget.geometry().contains(event.pos()):
             # drop inside list widget
-            item_data = event.mimeData().data(hou.qt._itemPathMimeType())
-            if not item_data.isEmpty():
-                items = str(item_data, 'utf-8').split('\t')
-                payload = {
-                    'type': PayloadType.NetworkItems,
-                    'data': items
-                }
-                self.beginCreateAsset(payload, self.getCurrentDirectory())
+            self.beginCreateAsset(payload, self.getCurrentDirectory())
         elif self.infoWidget.geometry().contains(event.pos()):
             # drop inside info widget
-            item_data = event.mimeData().data(hou.qt._itemPathMimeType())
-            if not item_data.isEmpty():
-                items = str(item_data, 'utf-8').split('\t')
-                payload = {
-                    'type': PayloadType.NetworkItems,
-                    'data': items
-                }
-                self.beginEditAsset(payload)
+            self.beginEditAsset(payload)
 
     def reloadCurrentAsset(self):
         index = self.listWidget.currentIndex()
