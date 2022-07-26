@@ -1,4 +1,3 @@
-from genericpath import isfile
 import logging
 import typing
 from os import path as opath
