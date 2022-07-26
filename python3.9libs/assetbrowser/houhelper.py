@@ -83,17 +83,3 @@ def captureViewport(file=None, frame=None, size=(200, 200)):
 
     # run flipbook on current viewport
     sv.flipbook(settings=fbs, open_dialog=False)
-
-
-def getTempFilePath(ext=None, tempdir=None):
-    tempdir = tempdir or tempfile.gettempdir()
-    gen = tempfile._get_candidate_names()
-    candidate = next(gen)
-
-    def filepath(name):
-        return os.path.join(tempdir, name + '.' + ext if ext else name)
-
-    while os.path.isfile(filepath(candidate)):
-        candidate = next(gen)
-
-    return filepath(candidate)

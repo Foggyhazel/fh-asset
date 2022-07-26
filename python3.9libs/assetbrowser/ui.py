@@ -19,6 +19,7 @@ from PySide2.QtWidgets import *
 from .createAsset import Payload, PayloadType, processCreateAssetPayload
 from . import asset
 from . import config
+from . import util
 from .ui_editAsset import Ui_EditAsset
 from .ui_assetInfo import Ui_AssetInfo
 from .model import AssetFileModel, FilterAssetDir
@@ -486,7 +487,7 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         delete current temp file if it exists and return new temp file path
         """
         self._deleteTempFile()
-        path = houhelper.getTempFilePath('jpg')
+        path = util.getTempFilePath('jpg')
         self._tempfilePath = path
         return path
 
