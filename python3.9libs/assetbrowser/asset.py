@@ -1,3 +1,4 @@
+from genericpath import isfile
 from os import path as opath
 import os
 from pkg_resources import resource_filename
@@ -285,6 +286,9 @@ class Asset:
 
         return self._ref.toDef(version_path)
 
+    def resolveLatestVersion(self):
+        return self.resolveVersion(self.latestVersion())
+
     def sortedVersions(self):
         if self._sortedVersions is None:
             versions = list(self.versions())
@@ -406,6 +410,15 @@ class AssetDef:
     def __str__(self) -> str:
         return json.dumps(self.data(), indent=2)
 
+    def getThumbnail(self) -> typing.Union[str, None]:
+        """Try to find thumbnail image by searching for [thumbnail].* file
+        with certain extensions
+
+        Returns:
+            typing.Union[str, None]: absolute thumbnail file path
+        """
+        return findThumbnail(self.ref())
+
 
 def getAsset(abs_asset_folder: str) -> typing.Union[Asset, None]:
     ref = Ref.fromAbsPath(abs_asset_folder)
@@ -430,6 +443,31 @@ valid_chars = ".%s%s" % (string.ascii_letters, string.digits)
 
 def cleanVersionString(version: str) -> str:
     return ''.join(c for c in version if c in valid_chars)
+
+
+def findThumbnail(defRef: Ref) -> typing.Union[str, None]:
+    """Try to find thumbnail image by searching for [thumbnail].* file
+    with certain extensions
+
+    Returns:
+        typing.Union[str, None]: absolute thumbnail file path
+    """
+
+    if not defRef.isAssetDef():
+        raise ValueError(
+            'find thumbnail need a ref pointing to an asset definition')
+
+    thumbname = config.thumbnail_filename
+    defdir = defRef.absDefDir()
+    if not defdir:
+        raise Exception('Cannot find thumbnail: asset def path is empty')
+    thumbpath = None
+    for ext in ['.jpg', '.png']:
+        f = opath.join(defdir, thumbname + ext)
+        if os.path.isfile(f):
+            thumbpath = f
+            break
+    return thumbpath
 
 
 @total_ordering

@@ -33,6 +33,17 @@ class AssetFileModel(QFileSystemModel):
         if role == Qt.ForegroundRole:
             return QColor(*config.asset_label_color)
         elif role == Qt.DecorationRole:
+            # return latest version thumnail or default thumbnail
+            ref = asset.Ref.fromAbsPath(path)
+            assetObj = ref.getAsset()
+            latestDef = assetObj.resolveVersion(
+                self.getSelectedVersion(path) or assetObj.latestVersion())
+
+            if latestDef:
+                thumbpath = asset.findThumbnail(latestDef)
+                if thumbpath:
+                    return QIcon(thumbpath)
+
             return QIcon(asset.resource_filename('assetbrowser', "icons/asset.png"))
         else:
             return super().data(index, role)

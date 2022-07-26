@@ -17,10 +17,16 @@ def getTempFilePath(ext=None, tempdir=None):
     return filepath(candidate)
 
 
-def copyFile(src_file: str, target_file: str):
-    target_dir = os.path.dirname()
+def copyFile(src_file: str, target_dir: str, new_name=None):
 
     if not os.path.isdir(target_dir):
         os.makedirs(target_dir)
 
+    if new_name:
+        _, ext = os.path.splitext(src_file)
+        target_file = os.path.join(target_dir, new_name + ext)
+    else:
+        target_file = os.path.join(target_dir, os.path.basename(src_file))
+
     shutil.copy2(src_file, target_file)
+    return target_file

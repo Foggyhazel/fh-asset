@@ -1,4 +1,3 @@
-from genericpath import isfile
 import logging
 import typing
 
@@ -93,9 +92,12 @@ class AssetBrowser(QWidget):
         list.setViewMode(QListView.IconMode)
         list.setMovement(QListView.Static)
         list.setRootIndex(model.index(config.root_path))
-        list.setUniformItemSizes(True)
-        list.setGridSize(QSize(60, 60))
+        list.setUniformItemSizes(False)
+        list.setGridSize(QSize(65, 85))
+        list.setSpacing(10)
+        list.setIconSize(QSize(60, 60))
         list.setItemDelegate(AssetItem())
+        list.setResizeMode(QListView.Adjust)
         list.setDragEnabled(True)
         list.setDragDropMode(QAbstractItemView.InternalMove)
 
@@ -269,6 +271,12 @@ class AssetBrowser(QWidget):
             asset.setAsset(assetObj)
             asset.setDef(assetDefObj)
 
+            # copy preview image to thumbnail
+            if data['previewImage']:
+                target_dir = assetDefObj.ref().absDefDir()
+                util.copyFile(data['previewImage'],
+                              target_dir, config.thumbnail_filename)
+
             alert(self, 'Asset Saved', 'Asset save', QMessageBox.Ok)
             self.editAsset.close()
 
@@ -338,6 +346,12 @@ class AssetBrowser(QWidget):
             asset.setAsset(current_asset)
             asset.setDef(assetDefObj)
 
+            # copy preview image to thumbnail
+            if data['previewImage']:
+                target_dir = assetDefObj.ref().absDefDir()
+                util.copyFile(data['previewImage'],
+                              target_dir, config.thumbnail_filename)
+
             alert(self, 'Asset Updated', 'Asset Updated', QMessageBox.Ok)
             self.editAsset.close()
 
@@ -372,6 +386,7 @@ class EditAssetFormData(TypedDict):
     tags: typing.List[str]
     description: str
     changes: str
+    previewImage: str
 
 
 class EditAssetWindow(QWidget, Ui_EditAsset):
@@ -435,7 +450,8 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
             'tags': self.getTags(),
             'version': str(asset.Version(self.asset_major.value(), self.asset_minor.value())),
             'description': self.asset_description.toPlainText(),
-            'changes': self.asset_changes.toPlainText()
+            'changes': self.asset_changes.toPlainText(),
+            'previewImage': self._previewPath
         }
 
     def getTags(self) -> typing.List[str]:
@@ -563,8 +579,19 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
             # fill version selector
             self.asset_versionSelect.clear()
             latest = assetObj.latestVersion()
+
+            prev_selected_version = self._file_model.getSelectedVersion(
+                assetObj.ref().absAssetDir())
+
             self.asset_versionSelect.addItems(
                 ['%s (latest)' % v if v == latest else v for v in versions])
+            # preserve selected version even after listview selection change
+            if prev_selected_version:
+                try:
+                    index = versions.index(prev_selected_version)
+                    self.asset_versionSelect.setCurrentIndex(index)
+                except:
+                    pass
             tags = assetObj.tags()
             self.asset_tags.setText(', '.join(tags) if len(tags) else '-')
 
