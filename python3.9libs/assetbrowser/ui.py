@@ -1,3 +1,4 @@
+from genericpath import isfile
 import logging
 import typing
 
@@ -10,6 +11,7 @@ except ImportError:
     from .typing_extensions import TypedDict
 from enum import Enum
 from os import path as opath
+import os
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -382,6 +384,8 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         self.setupUi(self)
         self.setTitle(mode)
         self.asset_type.setText(asset_type if asset_type is not None else '')
+        self._previewPath = None
+        self._tempfilePath = None
 
         # adjust ui base on mode
         if mode == self.Mode.New:
@@ -396,6 +400,14 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         # setup signals
         self.form_buttons.accepted.connect(self.handleSave)
         self.form_buttons.rejected.connect(self.handleClose)
+        self.btn_capture.clicked.connect(self.handleCaptureClicked)
+        self.btn_clear.clicked.connect(self.clearPreviewImage)
+        self.btn_plusMajor.clicked.connect(self.handlePlusMajorClicked)
+        self.btn_plusMinor.clicked.connect(self.handlePlusMinorClicked)
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        self.fitPreviewImage()
+        return super().resizeEvent(event)
 
     def setTitle(self, mode):
         if mode == self.Mode.New:
@@ -442,7 +454,54 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
                 alert(self, 'An Error Occured', str(e))
 
     def handleClose(self):
+        # clean up
+        self._deleteTempFile()
         self.close()
+
+    def setPreviewImage(self, filepath: str):
+        self._previewPath = filepath
+        pixmap = QPixmap(filepath)
+        pixmap = pixmap.scaled(self.asset_preview.size(),
+                               Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.asset_preview.setPixmap(pixmap)
+
+    def clearPreviewImage(self):
+        self.asset_preview.clear()
+        self._pixmap = None
+        self._previewPath = None
+
+    def fitPreviewImage(self):
+        if self._previewPath:
+            self.setPreviewImage(self._previewPath)
+
+    def _deleteTempFile(self):
+        if not self._tempfilePath:
+            return
+        if os.path.isfile(self._tempfilePath):
+            os.remove(self._tempfilePath)
+        self._tempfilePath = None
+
+    def _newTempFilePath(self) -> str:
+        """
+        delete current temp file if it exists and return new temp file path
+        """
+        self._deleteTempFile()
+        path = houhelper.getTempFilePath('jpg')
+        self._tempfilePath = path
+        return path
+
+    def handleCaptureClicked(self):
+        # capture viewport to a temporary file and display it
+        path = self._newTempFilePath()
+        houhelper.captureViewport(file=path, size=(200, 200))
+        self.setPreviewImage(path)
+
+    def handlePlusMajorClicked(self):
+        self.asset_major.setValue(self.asset_major.value() + 1)
+        self.asset_minor.setValue(0)
+
+    def handlePlusMinorClicked(self):
+        self.asset_minor.setValue(self.asset_minor.value() + 1)
 
 
 class AssetInfoWidget(QWidget, Ui_AssetInfo):

@@ -157,6 +157,23 @@ class Ui_EditAsset(object):
 
         self.horizontalLayout.addWidget(self.asset_minor)
 
+        self.btn_plusMajor = QPushButton(EditAsset)
+        self.btn_plusMajor.setObjectName(u"btn_plusMajor")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.btn_plusMajor.sizePolicy().hasHeightForWidth())
+        self.btn_plusMajor.setSizePolicy(sizePolicy2)
+        self.btn_plusMajor.setMaximumSize(QSize(55, 16777215))
+
+        self.horizontalLayout.addWidget(self.btn_plusMajor)
+
+        self.btn_plusMinor = QPushButton(EditAsset)
+        self.btn_plusMinor.setObjectName(u"btn_plusMinor")
+        self.btn_plusMinor.setMaximumSize(QSize(55, 16777215))
+
+        self.horizontalLayout.addWidget(self.btn_plusMinor)
+
 
         self.formLayout.setLayout(2, QFormLayout.FieldRole, self.horizontalLayout)
 
@@ -186,10 +203,12 @@ class Ui_EditAsset(object):
         self.lb_tags.setText(QCoreApplication.translate("EditAsset", u"Tags", None))
         self.lb_description.setText(QCoreApplication.translate("EditAsset", u"Description", None))
         self.lb_preview.setText(QCoreApplication.translate("EditAsset", u"Preview", None))
-        self.asset_preview.setText(QCoreApplication.translate("EditAsset", u"TextLabel", None))
+        self.asset_preview.setText("")
         self.btn_capture.setText(QCoreApplication.translate("EditAsset", u"Capture", None))
         self.btn_choose.setText(QCoreApplication.translate("EditAsset", u"Choose..", None))
         self.btn_clear.setText(QCoreApplication.translate("EditAsset", u"Clear", None))
         self.lb_changes.setText(QCoreApplication.translate("EditAsset", u"Changes", None))
+        self.btn_plusMajor.setText(QCoreApplication.translate("EditAsset", u"+M", None))
+        self.btn_plusMinor.setText(QCoreApplication.translate("EditAsset", u"+m", None))
     # retranslateUi
 

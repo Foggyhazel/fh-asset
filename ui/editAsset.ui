@@ -137,7 +137,7 @@ border-radius: 2px;</string>
           <enum>QFrame::NoFrame</enum>
          </property>
          <property name="text">
-          <string>TextLabel</string>
+          <string/>
          </property>
         </widget>
        </item>
@@ -215,6 +215,38 @@ border-radius: 2px;</string>
        </item>
        <item>
         <widget class="QSpinBox" name="asset_minor"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_plusMajor">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>55</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>+M</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_plusMinor">
+         <property name="maximumSize">
+          <size>
+           <width>55</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>+m</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

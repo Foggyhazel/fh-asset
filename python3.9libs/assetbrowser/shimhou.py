@@ -16,3 +16,7 @@ class Node:
 
     def loadItemsFromFile(*args):
         print('hou.Node.loadItemsFromFile()', args)
+
+
+class SceneViewer:
+    pass

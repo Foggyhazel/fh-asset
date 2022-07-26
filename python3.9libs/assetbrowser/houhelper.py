@@ -1,3 +1,4 @@
+from genericpath import isfile
 import logging
 import typing
 from os import path as opath
@@ -7,6 +8,7 @@ try:
     import hou
 except ImportError:
     from . import shimhou as hou
+import tempfile
 
 
 def getNetworkType(item_path: str):
@@ -56,3 +58,43 @@ def loadAsset(assetObj: asset.Asset, node: hou.Node, version_label=None):
     abs_path = opath.join(defObj.ref().absDefDir(), content)
 
     node.loadItemsFromFile(abs_path)
+
+
+def sceneViewer() -> typing.Union[hou.SceneViewer, None]:
+    curDesktop = hou.ui.curDesktop()
+    return curDesktop.paneTabOfType(hou.paneTabType.SceneViewer)
+
+
+def captureViewport(file=None, frame=None, size=(200, 200)):
+    sv = sceneViewer()
+    fbs: hou.FlipbookSettings = sv.flipbookSettings().stash()
+    # use current frame if not specified
+    frame = frame if frame is not None else hou.frame()
+    fbs.frameRange((frame, frame))
+
+    # output to mplay if file is not specified
+    if not file:
+        fbs.outputToMPlay(True)
+    else:
+        fbs.outputToMPlay(False)
+        fbs.output(file)
+
+    fbs.resolution(size)
+    fbs.useResolution(True)
+
+    # run flipbook on current viewport
+    sv.flipbook(settings=fbs, open_dialog=False)
+
+
+def getTempFilePath(ext=None, tempdir=None):
+    tempdir = tempdir or tempfile.gettempdir()
+    gen = tempfile._get_candidate_names()
+    candidate = next(gen)
+
+    def filepath(name):
+        return os.path.join(tempdir, name + '.' + ext if ext else name)
+
+    while os.path.isfile(filepath(candidate)):
+        candidate = next(gen)
+
+    return filepath(candidate)
