@@ -1,5 +1,5 @@
 import hou
-from assetbrowser import model, houhelper, asset
+from assetbrowser import model, houhelper, asset, createAsset
 import logging
 from urllib import parse
 
@@ -31,6 +31,10 @@ def tryLoadAsset(files):
         if not assetObj:
             logging.warning('Asset %s not found' % item_to_load)
             return
+        # check network type
+        if not isNetworkCompatible(assetObj, neteditor.pwd()):
+            neteditor.flashMessage(None, 'Wrong network type', 1)
+            return
         # clear selection
         node.setSelected(False, True)
         # load content from file
@@ -38,6 +42,12 @@ def tryLoadAsset(files):
                             version_label=p['version'])
 
         moveSelectedToPosition(node, neteditor.cursorPosition())
+
+
+def isNetworkCompatible(assetObj: asset.Asset, parent_node: hou.Node):
+    child_type = parent_node.childTypeCategory().name()
+    expected_type = createAsset.formatNetworkAssetType(child_type)
+    return expected_type == assetObj.assetType()
 
 
 def moveSelectedToPosition(container: hou.node, position: hou.Vector2):

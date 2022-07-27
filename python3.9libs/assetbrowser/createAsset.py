@@ -15,6 +15,10 @@ class Payload(typing.TypedDict):
     data: typing.Any
 
 
+def formatNetworkAssetType(child_type: str):
+    return 'network/%s' % child_type
+
+
 def determineAssetTypeFromPayload(payload: Payload) -> str:
     t = payload['type']
     if t == PayloadType.NetworkItems:
@@ -22,7 +26,7 @@ def determineAssetTypeFromPayload(payload: Payload) -> str:
         try:
             first_node = payload['data'][0]
             network_type = houhelper.getNetworkType(first_node)
-            return 'network/%s' % network_type
+            return formatNetworkAssetType(network_type)
         except Exception as e:
             raise Exception(
                 'Cannot determine network type of node "%s"' % first_node)

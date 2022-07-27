@@ -19,6 +19,13 @@ def getNetworkType(item_path: str):
     return parent.childTypeCategory().name()
 
 
+def getChildType(item_path: str):
+    item = hou.item(item_path)
+    if not item:
+        raise Exception('item not found in path %s' % item_path)
+    return item.childTypeCategory().name()
+
+
 def dumpNodeItemsToFile(items: typing.List[str], abs_file_path: str):
     """save items to file
 
