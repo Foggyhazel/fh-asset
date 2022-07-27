@@ -456,6 +456,7 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         return tags
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        self._deleteTempFile()
         super().closeEvent(event)
         self.setParent(None)
 
