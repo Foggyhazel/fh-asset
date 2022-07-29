@@ -55,6 +55,38 @@ class AssetItem(QStyledItemDelegate):
         return super().paint(painter, option, index)
 
 
+class AssetTreeView(QTreeView):
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.setHeaderHidden(True)
+        self.setIndentation(12)
+        self._disableEdit = []
+
+    def setModel(self, model: FilterAssetDir) -> None:
+        return super().setModel(model)
+
+    def model(self) -> FilterAssetDir:
+        return super().model()
+
+    def setDisableEdit(self, disallow_path: typing.List[str]):
+        self._disableEdit = [opath.normpath(p) for p in disallow_path]
+
+    def edit(self, index: QModelIndex, trigger: QAbstractItemView.EditTrigger, event: QEvent) -> bool:
+        model = self.model()
+        path = opath.normpath(model.filePath(index))
+
+        if path in self._disableEdit:
+            return False
+        return super().edit(index, trigger, event)
+
+    def getCurrentFileModelIndex(self) -> QModelIndex:
+        index = self.currentIndex()
+        return self.model().mapToSource(index).siblingAtColumn(0)
+
+    def getCurrentDirectory(self):
+        return self.model().filePath(self.currentIndex())
+
+
 class AssetBrowser(QWidget):
     def __init__(self, show_debug=False) -> None:
         super().__init__()
@@ -66,24 +98,24 @@ class AssetBrowser(QWidget):
         # model
         model = AssetFileModel()
         model.setRootPath(parent_of_root)
+        model.setReadOnly(False)
         filtered = FilterAssetDir(model, config.root_path)
         self.model = model
         self.filteredModel = filtered
 
         # directory tree
-        tree = QTreeView()
-        tree.setHeaderHidden(True)
+        tree = AssetTreeView()
         tree.setModel(filtered)
         tree.setRootIndex(filtered.mapFromSource(model.index(parent_of_root)))
         root_index = filtered.mapFromSource(model.index(config.root_path))
         tree.setCurrentIndex(root_index)
         tree.setExpanded(root_index, True)
-        tree.setIndentation(12)
         # show only first column
         for i in range(1, model.columnCount()):
             tree.hideColumn(i)
         # connect selection change
         tree.selectionModel().selectionChanged.connect(self.handleTreeSelectionChanged)
+        tree.setDisableEdit([config.root_path])
         self.treeWidget = tree
 
         # file list
@@ -139,8 +171,8 @@ class AssetBrowser(QWidget):
         # drag and drop
         self.setAcceptDrops(True)
 
-    def updateFileView(self, index: QModelIndex):
-        self.listWidget.setRootIndex(index.siblingAtColumn(0))
+    def updateFileView(self, file_model_index: QModelIndex):
+        self.listWidget.setRootIndex(file_model_index.siblingAtColumn(0))
 
     def getCurrentAsset(self):
         index = self.listWidget.currentIndex()
@@ -154,7 +186,7 @@ class AssetBrowser(QWidget):
         self.infoWidget.setAsset(info)
 
     def handleTreeSelectionChanged(self, selected: QItemSelection, deselected):
-        self.updateFileView(self.getCurrentFileModelIndex())
+        self.updateFileView(self.treeWidget.getCurrentFileModelIndex())
 
     def handleListSelectionChanged(self, selected: QItemSelection, deselected):
         index = self.listWidget.currentIndex()
@@ -170,12 +202,8 @@ class AssetBrowser(QWidget):
         elif info.isDir():
             self.setCurrentDirectory(path)
 
-    def getCurrentFileModelIndex(self) -> QModelIndex:
-        index = self.treeWidget.currentIndex()
-        return self.filteredModel.mapToSource(index)
-
     def getCurrentDirectory(self) -> str:
-        return self.model.filePath(self.getCurrentFileModelIndex().siblingAtColumn(0))
+        return self.treeWidget.getCurrentDirectory()
 
     def setCurrentDirectory(self, path: str):
         file_index = self.model.index(path)
@@ -213,11 +241,6 @@ class AssetBrowser(QWidget):
         elif self.infoWidget.geometry().contains(event.pos()):
             # drop inside info widget
             self.beginEditAsset(payload)
-
-    def reloadCurrentAsset(self):
-        index = self.listWidget.currentIndex()
-        path = self.model.filePath(index)
-        self.updateInfoView(path)
 
 # region Debug
 
@@ -351,8 +374,8 @@ class AssetBrowser(QWidget):
             alert(self, 'Asset Updated', 'Asset Updated', QMessageBox.Ok)
             self.editAsset.close()
 
-            # reload asset
-            self.reloadCurrentAsset()
+            # reload asset info
+            self.infoWidget.reloadAssetDef()
 
         try:
             asset_type = asset_type = createAsset.determineAssetTypeFromPayload(
@@ -528,6 +551,12 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
         # set signal
         self.asset_versionSelect.currentIndexChanged.connect(
             self.handleVersionChanged)
+
+    def reloadAssetDef(self):
+        if not self._asset:
+            return
+        assetObj = self._asset.ref().getAsset()
+        self.setAsset(assetObj)
 
     def handleVersionChanged(self, index):
         if index < 0:

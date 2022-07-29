@@ -112,6 +112,10 @@ class FilterAssetDir(QSortFilterProxyModel):
             return False
         return super().filterAcceptsRow(source_row, source_parent)
 
+    def filePath(self, index: QModelIndex):
+        src_index = self.mapToSource(index)
+        return self.fileModel.filePath(src_index.siblingAtColumn(0))
+
     @staticmethod
     def samefile(pathA: str, pathB: str):
         # return opath.samefile(pathA, pathB)
