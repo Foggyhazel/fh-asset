@@ -375,7 +375,7 @@ class AssetBrowser(QWidget):
             self.editAsset.close()
 
             # reload asset info
-            self.infoWidget.reloadAssetDef()
+            self.infoWidget.reloadAssetDef(latest_version=True)
 
         try:
             asset_type = asset_type = createAsset.determineAssetTypeFromPayload(
@@ -552,11 +552,11 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
         self.asset_versionSelect.currentIndexChanged.connect(
             self.handleVersionChanged)
 
-    def reloadAssetDef(self):
+    def reloadAssetDef(self, latest_version=False):
         if not self._asset:
             return
         assetObj = self._asset.ref().getAsset()
-        self.setAsset(assetObj)
+        self.setAsset(assetObj, latest_version)
 
     def handleVersionChanged(self, index):
         if index < 0:
@@ -590,7 +590,7 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
         self.asset_tags.setText('-')
         self.asset_changes.setText('-')
 
-    def setAsset(self, assetObj: typing.Union[asset.Asset, None]):
+    def setAsset(self, assetObj: typing.Union[asset.Asset, None], use_latest_version=False):
         if assetObj is None:
             self.clear()
         else:
@@ -607,7 +607,7 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
             latest = assetObj.latestVersion()
 
             prev_selected_version = self._file_model.getSelectedVersion(
-                assetObj.ref().absAssetDir())
+                assetObj.ref().absAssetDir()) if not use_latest_version else None
 
             self.asset_versionSelect.addItems(
                 ['%s (latest)' % v if v == latest else v for v in versions])
