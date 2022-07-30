@@ -54,6 +54,8 @@ class AssetFileModel(QFileSystemModel):
     def setSelectedVersion(self, abs_assetDir: str, version: str):
         k = opath.normpath(abs_assetDir)
         self._selectedVersion[k] = version
+        index = self.index(k)
+        self.dataChanged.emit(index, index, [Qt.DisplayRole])
 
     def getSelectedVersion(self, abs_assetDir: str) -> typing.Union[str, None]:
         k = opath.normpath(abs_assetDir)
