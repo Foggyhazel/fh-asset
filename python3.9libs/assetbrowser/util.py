@@ -1,6 +1,8 @@
 import shutil
 import os
 import tempfile
+import platform
+import subprocess
 
 
 def getTempFilePath(ext=None, tempdir=None):
@@ -30,3 +32,16 @@ def copyFile(src_file: str, target_dir: str, new_name=None):
 
     shutil.copy2(src_file, target_file)
     return target_file
+
+
+def openInFileBrowser(path: str):
+    OS = platform.system().lower()
+
+    if 'windows' in OS:
+        cmd = 'explorer'
+    elif 'osx' in OS or 'darwin' in OS:
+        cmd = 'open'
+    else:
+        cmd = 'xdg-open'
+
+    subprocess.run([cmd, os.path.realpath(path)])

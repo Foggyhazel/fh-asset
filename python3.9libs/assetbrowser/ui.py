@@ -24,6 +24,7 @@ from .ui_assetInfo import Ui_AssetInfo
 from .model import AssetFileModel, FilterAssetDir
 import time
 import datetime
+from functools import partial
 
 try:
     import hou
@@ -61,7 +62,6 @@ class AssetTreeView(QTreeView):
         self.setHeaderHidden(True)
         self.setIndentation(12)
         self._disableEdit = []
-        self._contextMenuOver = None
 
         # context
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -94,31 +94,27 @@ class AssetTreeView(QTreeView):
         index = self.indexAt(pos)
         if not index.isValid():
             return
+        path = self.model().filePath(index)
 
-        self._contextMenuOver = index
         menu = QMenu(self)
         a_create_folder = QAction('Create Folder', self)
-        a_create_folder.triggered.connect(self.createFolder)
+        a_create_folder.triggered.connect(partial(self.createFolder, path))
+        a_open_folder = QAction('Open in Explorer', self)
+        a_open_folder.triggered.connect(partial(self.openFolder, path))
+
         menu.addAction(a_create_folder)
+        menu.addAction(a_open_folder)
         menu.exec_(self.mapToGlobal(pos))
-        self._contextMenuOver = None
 
-    def createFolder(self, checked: bool):
-        index = self._contextMenuOver
-
-        if not index or not index.isValid():
-            return
-
-        create_at = self.model().filePath(index)
-
+    def createFolder(self, create_in):
         valid = False
         curr_id = 0
         while not valid:
             folder_name = 'New Folder' if curr_id == 0 else 'New Folder (%d)' % curr_id
-            valid = not os.path.isdir(os.path.join(create_at, folder_name))
+            valid = not os.path.isdir(os.path.join(create_in, folder_name))
             curr_id = curr_id + 1
 
-        path = os.path.join(create_at, folder_name)
+        path = os.path.join(create_in, folder_name)
         try:
             os.makedirs(path)
             index = self.model().indexFromPath(path)
@@ -126,6 +122,9 @@ class AssetTreeView(QTreeView):
             self.edit(index)
         except Exception as e:
             alert(self, 'Cannot create folder', 'Error: ' + str(e))
+
+    def openFolder(self, path):
+        util.openInFileBrowser(path)
 
 
 class AssetBrowser(QWidget):
