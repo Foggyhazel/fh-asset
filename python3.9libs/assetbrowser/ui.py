@@ -692,5 +692,5 @@ class AssetInfoWidget(QWidget, Ui_AssetInfo):
 
     @staticmethod
     def formatDate(timestamp):
-        date = datetime.date.fromtimestamp(timestamp)
-        return date.strftime('%c')
+        date = datetime.datetime.fromtimestamp(timestamp)
+        return date.strftime('%m/%d/%Y %H:%M:%S')
