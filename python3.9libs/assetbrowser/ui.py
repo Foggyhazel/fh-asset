@@ -61,6 +61,11 @@ class AssetTreeView(QTreeView):
         self.setHeaderHidden(True)
         self.setIndentation(12)
         self._disableEdit = []
+        self._contextMenuOver = None
+
+        # context
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContexMenu)
 
     def setModel(self, model: FilterAssetDir) -> None:
         return super().setModel(model)
@@ -71,13 +76,12 @@ class AssetTreeView(QTreeView):
     def setDisableEdit(self, disallow_path: typing.List[str]):
         self._disableEdit = [opath.normpath(p) for p in disallow_path]
 
-    def edit(self, index: QModelIndex, trigger: QAbstractItemView.EditTrigger, event: QEvent) -> bool:
+    def edit(self, *args) -> bool:
         model = self.model()
-        path = opath.normpath(model.filePath(index))
-
+        path = opath.normpath(model.filePath(args[0]))
         if path in self._disableEdit:
             return False
-        return super().edit(index, trigger, event)
+        return super().edit(*args)
 
     def getCurrentFileModelIndex(self) -> QModelIndex:
         index = self.currentIndex()
@@ -85,6 +89,43 @@ class AssetTreeView(QTreeView):
 
     def getCurrentDirectory(self):
         return self.model().filePath(self.currentIndex())
+
+    def showContexMenu(self, pos: QPoint):
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+
+        self._contextMenuOver = index
+        menu = QMenu(self)
+        a_create_folder = QAction('Create Folder', self)
+        a_create_folder.triggered.connect(self.createFolder)
+        menu.addAction(a_create_folder)
+        menu.exec_(self.mapToGlobal(pos))
+        self._contextMenuOver = None
+
+    def createFolder(self, checked: bool):
+        index = self._contextMenuOver
+
+        if not index or not index.isValid():
+            return
+
+        create_at = self.model().filePath(index)
+
+        valid = False
+        curr_id = 0
+        while not valid:
+            folder_name = 'New Folder' if curr_id == 0 else 'New Folder (%d)' % curr_id
+            valid = not os.path.isdir(os.path.join(create_at, folder_name))
+            curr_id = curr_id + 1
+
+        path = os.path.join(create_at, folder_name)
+        try:
+            os.makedirs(path)
+            index = self.model().indexFromPath(path)
+            self.setCurrentIndex(index)
+            self.edit(index)
+        except Exception as e:
+            alert(self, 'Cannot create folder', 'Error: ' + str(e))
 
 
 class AssetBrowser(QWidget):

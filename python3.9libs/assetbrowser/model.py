@@ -118,6 +118,11 @@ class FilterAssetDir(QSortFilterProxyModel):
         src_index = self.mapToSource(index)
         return self.fileModel.filePath(src_index.siblingAtColumn(0))
 
+    def indexFromPath(self, path: str) -> QModelIndex:
+        src_index = self.fileModel.index(path)
+        return self.mapFromSource(src_index)
+        
+
     @staticmethod
     def samefile(pathA: str, pathB: str):
         # return opath.samefile(pathA, pathB)
