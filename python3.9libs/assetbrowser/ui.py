@@ -563,7 +563,7 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         delete current temp file if it exists and return new temp file path
         """
         self._deleteTempFile()
-        path = util.getTempFilePath('jpg')
+        path = util.getTempFilePath('png')
         self._tempfilePath = path
         return path
 
