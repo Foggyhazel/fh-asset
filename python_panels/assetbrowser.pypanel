@@ -8,12 +8,19 @@
   <interface name="assetbrowser" label="Asset Browser" icon="MISC_python" showNetworkNavigationBar="false" help_url="">
     <script><![CDATA[from toolutils import safe_reload
 import importlib
-from  assetbrowser import ui, ui_assetInfo, model, config
+from  assetbrowser import ui, ui_assetInfo, model, config, houhelper, asset, createAsset, util
 
-importlib.reload(ui)
-importlib.reload(ui_assetInfo)
-importlib.reload(model)
-importlib.reload(config)
+
+"""
+reload(ui)
+reload(ui_assetInfo)
+reload(model)
+reload(config)
+reload(houhelper)
+reload(asset)
+reload(createAsset)
+reload(util)
+"""
 
 def onCreateInterface():
     return ui.AssetBrowser()

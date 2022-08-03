@@ -16,7 +16,7 @@ def dropAccept(files):
 
 def tryLoadAsset(files):
     pane = hou.ui.paneTabUnderCursor()
-    node: hou.Node = pane.pwd()
+    node = pane.pwd()
     if not len(files):
         return
 
@@ -26,7 +26,7 @@ def tryLoadAsset(files):
 
     # drop on network view
     if (pane.type().name() == "NetworkEditor"):
-        neteditor: hou.NetworkEditor = pane
+        neteditor = pane
         assetObj = asset.getAsset(p['file'])
         if not assetObj:
             logging.warning('Asset %s not found' % item_to_load)
@@ -44,13 +44,13 @@ def tryLoadAsset(files):
         moveSelectedToPosition(node, neteditor.cursorPosition())
 
 
-def isNetworkCompatible(assetObj: asset.Asset, parent_node: hou.Node):
+def isNetworkCompatible(assetObj, parent_node):
     child_type = parent_node.childTypeCategory().name()
     expected_type = createAsset.formatNetworkAssetType(child_type)
     return expected_type == assetObj.assetType()
 
 
-def moveSelectedToPosition(container: hou.node, position: hou.Vector2):
+def moveSelectedToPosition(container, position):
     items = container.selectedItems()
     nodes = container.selectedChildren()
 
@@ -75,7 +75,7 @@ def moveSelectedToPosition(container: hou.node, position: hou.Vector2):
         item.setPosition(allPos[i] + delta)
 
 
-def parseAssetUrl(url: str):
+def parseAssetUrl(url):
     p = parse.urlparse(url)
     q = parse.parse_qs(p.query)
     try:
