@@ -1,13 +1,11 @@
 import logging
 import typing
 
-from assetbrowser import houhelper
-
-from assetbrowser import createAsset
 try:
     from typing import TypedDict
 except ImportError:
     from .typing_extensions import TypedDict
+
 from enum import Enum
 from os import path as opath
 import os
@@ -15,13 +13,11 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
+from . import asset, config, util, houhelper, createAsset
 from .createAsset import Payload, PayloadType, processCreateAssetPayload
-from . import asset
-from . import config
-from . import util
+from .model import AssetFileModel, FilterAssetDir
 from .ui_editAsset import Ui_EditAsset
 from .ui_assetInfo import Ui_AssetInfo
-from .model import AssetFileModel, FilterAssetDir
 import time
 import datetime
 from functools import partial
