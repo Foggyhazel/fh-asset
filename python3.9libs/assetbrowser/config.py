@@ -1,4 +1,3 @@
-from genericpath import isfile
 import json
 import logging
 import os
