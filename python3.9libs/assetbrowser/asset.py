@@ -1,4 +1,3 @@
-from genericpath import isfile
 from os import path as opath
 import os
 from pkg_resources import resource_filename
