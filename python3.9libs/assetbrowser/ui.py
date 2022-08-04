@@ -64,7 +64,18 @@ class AssetTreeView(QTreeView):
         self.customContextMenuRequested.connect(self.showContexMenu)
 
     def setModel(self, model: FilterAssetDir) -> None:
+        # reconnect handle filerename signal
+        old_model = self.model()
+        if old_model:
+            old_model.sourceModel().fileRenamed.disconnect(self.handleFileRenamed)
+        model.sourceModel().fileRenamed.connect(self.handleFileRenamed)
         return super().setModel(model)
+
+    def handleFileRenamed(self, path, old_name, new_name):
+        # ugly workaround for qtree loss selection if folder is rename from external source
+        # the fileRenamed signal is manually emit after renaming in AssetFileModel.setData()
+        self.setCurrentIndex(self.model().indexFromPath(
+            os.path.join(path, new_name)))
 
     def model(self) -> FilterAssetDir:
         return super().model()
