@@ -1,8 +1,9 @@
 from os import path as opath
-from PySide2.QtWidgets import QFileSystemModel
+from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from . import asset, config
+import os
 
 mimeTypes = {
     'assetItem': 'application/assetbrowser.asset-item'
@@ -90,9 +91,25 @@ class AssetFileModel(QFileSystemModel):
 
         if ver:
             path = path + '?version=%s' % ver
-
+        print('mimedata', path)
         mimeData.setUrls([path])
         return mimeData
+
+    def setData(self, index, value, role):
+        if role == Qt.EditRole:
+            # customize renaming folder so that QFileSystemModel does not loss
+            # folder watch
+            oldpath = self.filePath(index)
+            olddir = opath.dirname(oldpath)
+            newpath = opath.join(olddir, value)
+
+            result = QDir().rename(oldpath, newpath)
+            if result:
+                # self.dataChanged.emit(index, index)
+                self.fileRenamed.emit(olddir, os.path.basename(oldpath), value)
+            return result
+        else:
+            return super(AssetFileModel, self).setData(index, value, role)
 
 
 class FilterAssetDir(QSortFilterProxyModel):
@@ -120,7 +137,6 @@ class FilterAssetDir(QSortFilterProxyModel):
     def indexFromPath(self, path):
         src_index = self.fileModel.index(path)
         return self.mapFromSource(src_index)
-        
 
     @staticmethod
     def samefile(pathA, pathB):

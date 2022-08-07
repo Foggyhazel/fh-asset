@@ -1,8 +1,5 @@
 import logging
 
-from assetbrowser import houhelper
-
-from assetbrowser import createAsset
 from os import path as opath
 import os
 from PySide2.QtCore import *
@@ -10,9 +7,8 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
 from .createAsset import PayloadType, processCreateAssetPayload
-from . import asset
-from . import config
-from . import util
+from . import asset, config, util, houhelper, createAsset
+from .model import AssetFileModel, FilterAssetDir
 from .ui_editAsset import Ui_EditAsset
 from .ui_assetInfo import Ui_AssetInfo
 from .model import AssetFileModel, FilterAssetDir
@@ -62,7 +58,18 @@ class AssetTreeView(QTreeView):
         self.customContextMenuRequested.connect(self.showContexMenu)
 
     def setModel(self, model):
+        # reconnect handle filerename signal
+        old_model = self.model()
+        if old_model:
+            old_model.sourceModel().fileRenamed.disconnect(self.handleFileRenamed)
+        model.sourceModel().fileRenamed.connect(self.handleFileRenamed)
         return super(AssetTreeView, self).setModel(model)
+
+    def handleFileRenamed(self, path, old_name, new_name):
+        # ugly workaround for qtree loss selection if folder is rename from external source
+        # the fileRenamed signal is manually emit after renaming in AssetFileModel.setData()
+        self.setCurrentIndex(self.model().indexFromPath(
+            os.path.join(path, new_name)))
 
     def model(self):
         return super(AssetTreeView, self).model()

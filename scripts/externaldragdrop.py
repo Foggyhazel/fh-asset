@@ -9,7 +9,9 @@ def dropAccept(files):
     # custom mime type can be checked if it exists but is not supported for reading from
     # so files argument is use instead
     if hou.ui.hasDragSourceData(mimeType):
-        tryLoadAsset(files)
+        # use plain text mime instead because file path with space get splitted into multiple items
+        url = hou.ui.getDragSourceData('text/plain')
+        tryLoadAsset([url])
         return True
     return False
 
