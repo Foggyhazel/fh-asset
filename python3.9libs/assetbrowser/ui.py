@@ -443,6 +443,7 @@ class AssetBrowser(QWidget):
             w.setParent(hou.qt.mainWindow(), Qt.Window)
 
         w.show()
+        w.raise_()
 
 
 class EditAssetFormData(TypedDict):
@@ -483,6 +484,7 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         self.form_buttons.accepted.connect(self.handleSave)
         self.form_buttons.rejected.connect(self.handleClose)
         self.btn_capture.clicked.connect(self.handleCaptureClicked)
+        self.btn_choose.clicked.connect(self.handleFileChooseClicked)
         self.btn_clear.clicked.connect(self.clearPreviewImage)
         self.btn_plusMajor.clicked.connect(self.handlePlusMajorClicked)
         self.btn_plusMinor.clicked.connect(self.handlePlusMinorClicked)
@@ -579,6 +581,16 @@ class EditAssetWindow(QWidget, Ui_EditAsset):
         path = self._newTempFilePath()
         houhelper.captureViewport(file=path, size=(200, 200))
         self.setPreviewImage(path)
+        
+        # workaround window lose focus on linux
+        self.raise_()
+        
+    def handleFileChooseClicked(self):
+        fname = hou.ui.selectFile(pattern='*.jpg, *.png')
+        fname = hou.expandString(fname)
+        self.setPreviewImage(fname)
+
+        self.raise_()
 
     def handlePlusMajorClicked(self):
         self.asset_major.setValue(self.asset_major.value() + 1)
