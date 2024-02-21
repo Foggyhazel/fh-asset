@@ -2,3 +2,4 @@ __pycache__/
 python2.7libs/assetbrowser/Assets
 python3.9libs/assetbrowser/Assets
 env/
+.DS_STORE
